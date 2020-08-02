@@ -1,0 +1,11 @@
+{
+  "name": "psroulette",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "GPLV3",
+  "dependencies": {
+    "express": "^4.17.1",
+    "simple-peer": "^9.7.2",
+    "socket.io": "^2.3.0"
+  }
+}
