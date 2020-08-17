@@ -3,9 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "GPLV3",
+  "scripts": {
+    "start": "node index.js",
+    "watch": "npx watchify ./client/main.js -o ./public/bundle.js",
+    "build": "npx browserify ./client/main.js -o ./public/bundle.js"
+  },
   "dependencies": {
     "express": "^4.17.1",
     "simple-peer": "^9.7.2",
     "socket.io": "^2.3.0"
+  },
+  "devDependencies": {
+    "watchify": "^3.11.1"
   }
 }
