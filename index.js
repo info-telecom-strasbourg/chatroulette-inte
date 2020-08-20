@@ -27,13 +27,24 @@ app.get(routeName, (req, res) => {
 /*****************************************************************************/
 
 var queue = [[], []];
-var currentCalls = [];
+var currentCalls = [];//utilité ?
 
 /**
  * Initialise un socket et le met dans la file d'attente
  */
 function login() {
-
+    app.get('/', (req, res) => {
+        if(queue[1].length != 0) {
+            this.emit('peer.init');
+        }
+    });
+    app.get(routeName, (req, res) => {
+        if (queue[0].length != 0) {
+            this.emit('peer.init');
+        }
+    });
+    
+    joinQueue(this);
 }
 
 /**
@@ -41,7 +52,13 @@ function login() {
  * @param socket 
  */
 function joinQueue(socket) {
+    app.get('/', (req, res) => {
+        queue[0].push(socket);
+    });
 
+    app.get(routeName, (req, res) => {
+        queue[1].push(socket);
+    });
 }
 
 /**
@@ -49,27 +66,55 @@ function joinQueue(socket) {
  * les remet dans la file d'attente
  * @param socket 
  */
-function rejoinQueue(socket)
+function rejoinQueue(socket) {
+    //TODO stop call
+    joinQueue(socket);
+}
 
 /**
  * Transmet l'offre au socket appairé
  */
 function sendOffer() {
-
+    app.get('/', (req, res) => {
+        if (queue[1].length != 0) {
+            socket.to(queue[1][0].id).emit('offer.receive');
+        }
+    });
+    app.get(routeName, (req, res) => {
+        if (queue[0].length != 0) {
+            socket.to(queue[0][0].id).emit('offer.receive');
+        }
+    });
 }
 
 /**
  * Transmet la réponse au socket appairé
  */
 function sendAnswer() {
-
+    app.get('/', (req, res) => {
+        if (queue[1].length != 0) {
+            socket.to(queue[1][0].id).emit('answer.receive');
+        }
+    });
+    app.get(routeName, (req, res) => {
+        if (queue[0].length != 0) {
+            socket.to(queue[0][0].id).emit('answer.receive');
+        }
+    });
+    shift(queue[0]);
+    shift(queue[1]);
 }
 
 /**
  * Appelée quand un socket se déconnecte
  */
 function disconnect() {
-
+    if (routeName == "/channel2")
+        queue[1].splice(queue[1].indexOf(this), 1);
+    else
+        queue[0].splice(queue[0].indexOf(this), 1);
+    
+    this.broadcast.emit("Disconnect");
 }
 
 io.on('connection', function (socket) {
