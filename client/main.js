@@ -1,4 +1,3 @@
-alert("Super");
 let Peer = require('simple-peer');
 let io = require("socket.io-client");
 let socket = io({
@@ -90,5 +89,5 @@ function destroyPeer() {
 socket.on("peer.init", initiatePeer);
 socket.on("offer.receive", receiveOffer);
 socket.on("answer.receive", signalAnswer);
-socket.on("peer.destroy", destroyPeer);
+socket.on("peer.destroy", destroyPeer)
 

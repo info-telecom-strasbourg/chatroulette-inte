@@ -21,28 +21,44 @@ var client = {
  * @return nouvelle instance de Peer
  */
 function createPeer(initiator) {
-
+    return new Peer({ initiator: initiator });
 }
 
 /**
  * Appelée si ce client doit être l'initiateur de la connection
  */
 function initiatePeer() {
-  
+    client.connected = false;
+    let peer = createPeer(true);
+
+    peer.on('signal', function (data) {
+        if (!peer.connected) {
+            socket.emit('offer', data);
+        }
+    });
+
+    client.peer = peer;
 }
 
 /**
  * Appelée si ce client doit attendre une offre
  */
 function receiveOffer(offer) {
-  
+    let peer = createPeer(false);
+    peer.on('signal', (data) => {
+        socket.emit('answer', data);
+    });
+    peer.signal(offer);
+    client.peer = peer;
 }
 
 /**
  * Appelée quand le client reçoit une réponse
  */
 function signalAnswer(answer) {
-  
+    client.connected = true;
+    let peer = client.peer;
+    peer.signal(answer);
 }
 
 /**
@@ -63,7 +79,12 @@ function removeVideo() {
  * Met fin à la connexion p2p
  */
 function destroyPeer() {
-  
+    removeVideo();
+
+    client.connected = false;
+    if (client.peer) {
+        client.peer.destroy();
+    }
 }
 
 socket.on("peer.init", initiatePeer);
