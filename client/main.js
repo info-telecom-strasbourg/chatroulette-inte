@@ -1,3 +1,4 @@
+alert("Super");
 let Peer = require('simple-peer');
 let io = require("socket.io-client");
 let socket = io({
@@ -20,28 +21,44 @@ var client = {
  * @return nouvelle instance de Peer
  */
 function createPeer(initiator) {
-
+    return new Peer({ initiator: initiator });
 }
 
 /**
  * Appelée si ce client doit être l'initiateur de la connection
  */
 function initiatePeer() {
+    client.connected = false;
+    let peer = createPeer(true);
 
+    peer.on('signal', function (data) {
+        if (!peer.connected) {
+            socket.emit('offer', data);
+        }
+    });
+
+    client.peer = peer;
 }
 
 /**
  * Appelée si ce client doit attendre une offre
  */
 function receiveOffer(offer) {
-
+    let peer = createPeer(false);
+    peer.on('signal', (data) => {
+        socket.emit('answer', data);
+    });
+    peer.signal(offer);
+    client.peer = peer;
 }
 
 /**
  * Appelée quand le client reçoit une réponse
  */
 function signalAnswer(answer) {
-
+    client.connected = true;
+    let peer = client.peer;
+    peer.signal(answer);
 }
 
 /**
@@ -73,5 +90,5 @@ function destroyPeer() {
 socket.on("peer.init", initiatePeer);
 socket.on("offer.receive", receiveOffer);
 socket.on("answer.receive", signalAnswer);
-socket.on("peer.destroy", destroyPeer)
+socket.on("peer.destroy", destroyPeer);
 

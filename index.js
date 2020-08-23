@@ -9,6 +9,7 @@ const server = http.createServer({}, app);
 const io = require('socket.io')(server);
 const port = process.env.PORT || 3000;
 const routeName = process.env.ROUTE_NAME || "/channel2";
+app.use(express.static(__dirname + "/public/"))
 
 /*****************************************************************************/
 /*                                Routes                                     */
@@ -26,15 +27,19 @@ app.get(routeName, (req, res) => {
 /*                               Logique                                     */
 /*****************************************************************************/
 
-var queue = [[], []];
-var currentCalls = [];//utilité ?
+var queue = [
+    [],
+    []
+];
+var currentCalls = []; //utilité ?
 
 /**
  * Initialise un socket et le met dans la file d'attente
  */
 function login() {
+    console.log('OK');
     app.get('/', (req, res) => {
-        if(queue[1].length != 0) {
+        if (queue[1].length != 0) {
             this.emit('peer.init');
         }
     });
@@ -43,7 +48,7 @@ function login() {
             this.emit('peer.init');
         }
     });
-    
+
     joinQueue(this);
 }
 
@@ -59,6 +64,11 @@ function joinQueue(socket) {
     app.get(routeName, (req, res) => {
         queue[1].push(socket);
     });
+
+    console.log('1A:');
+    console.log(queue[0].length);
+    console.log('Autres:');
+    console.log(queue[1].length);
 }
 
 /**
@@ -113,11 +123,11 @@ function disconnect() {
         queue[1].splice(queue[1].indexOf(this), 1);
     else
         queue[0].splice(queue[0].indexOf(this), 1);
-    
+
     this.broadcast.emit("Disconnect");
 }
 
-io.on('connection', function (socket) {
+io.on('connection', function(socket) {
     socket.on("login", login);
     socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);
