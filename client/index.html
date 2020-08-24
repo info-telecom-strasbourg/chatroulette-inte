@@ -9,18 +9,39 @@
 </head>
 
 <body>
-    <video id="host-video"></video>
-    <video id="remote-video"></video>
-    <h1> Petit taupin, tu est en 1A ;) </h1>
+    <div id="connection" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <label for="pseudo">Pseudo</label>
+                <input type="text" id="pseudo">
+                <span id="pseudo-error" class="invalid-feedback" role="alert" style="display: none;">
+                    <strong>Votre pseudo doit faire plus de 3 caractères</strong>
+                </span>
+
+                <label for="annee">Année</label>
+                <select name="annee" id="annee">
+                    <option value="0" selected>1A</option>
+                    <option value="1">2A/3A</option>
+                </select>
+                <input type="button" id="validate" value="Valider">
+            </div>
+        </div>
+    </div>
+
+    <div id="container-sections" style="display: flex; width: 100%; top: 0; bottom: 0; position: absolute;">
+        <div id="section-video" style="background-color: #7e9dce;">
+            <video autoplay="true" id="host-video" style="position: fixed; left: 0; bottom: 0; min-width: 70%; min-height: 100%;"></video>
+            <video autoplay="true" id="remote-video"></video>
+        </div>
+        <div id="section-chat" style="background-color: #c1d1ea;">
+            <div id="chat">
+            </div>
+            <input type="button" id="send" value="Envoyer">
+        </div>
+    </div>
 
 
-
-
-    <script>
-        var channel = 0;
-    </script>
-    <script src="main.js"></script>
-    <script src="bundle.js"></script>
+    <script src="bundle.js "></script>
 </body>
 
 </html>

@@ -1,27 +1,26 @@
 const express = require('express');
 const app = express();
 const path = require("path");
-const http = require('http')
+const http = require('http');
+
+
 var fs = require('fs');
 
 const server = http.createServer({}, app);
 
 const io = require('socket.io')(server);
 const port = process.env.PORT || 3000;
-const routeName = process.env.ROUTE_NAME || "/channel2";
+const routeName = "/index";
 app.use(express.static(__dirname + "/public/"))
 
 /*****************************************************************************/
 /*                                Routes                                     */
 /*****************************************************************************/
 
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname + '/client/index.html'));
 });
 
-app.get(routeName, (req, res) => {
-    res.sendFile(path.join(__dirname + '/client/index2.html'));
-});
 
 /*****************************************************************************/
 /*                               Logique                                     */
@@ -36,38 +35,29 @@ var currentCalls = []; //utilité ?
 /**
  * Initialise un socket et le met dans la file d'attente
  */
-function login() {
-    console.log('OK');
-    app.get('/', (req, res) => {
-        if (queue[1].length != 0) {
-            this.emit('peer.init');
-        }
-    });
-    app.get(routeName, (req, res) => {
-        if (queue[0].length != 0) {
-            this.emit('peer.init');
-        }
-    });
+function login(channel) {
+    if (channel === 0 && queue[1].length != 0)
+        this.emit('peer.init');
+    else if (channel === 1 && queue[0].length != 0)
+        this.emit('peer.init');
 
-    joinQueue(this);
+    joinQueue(this, channel);
 }
 
 /**
  * Met dans la file d'attente le socket
  * @param socket 
  */
-function joinQueue(socket) {
-    app.get('/', (req, res) => {
+function joinQueue(socket, channel) {
+    if (channel === 0)
         queue[0].push(socket);
-    });
-
-    app.get(routeName, (req, res) => {
+    else if (channel === 1)
         queue[1].push(socket);
-    });
-
-    console.log('1A:');
+    console.log("---------------");
+    console.log("## Login ##");
+    console.log('Number of 1A: ');
     console.log(queue[0].length);
-    console.log('Autres:');
+    console.log('Number of 2A-3A: ');
     console.log(queue[1].length);
 }
 
@@ -76,53 +66,56 @@ function joinQueue(socket) {
  * les remet dans la file d'attente
  * @param socket 
  */
-function rejoinQueue(socket) {
+function rejoinQueue(socket, channel) {
     //TODO stop call
-    joinQueue(socket);
+    joinQueue(socket, channel);
 }
 
 /**
  * Transmet l'offre au socket appairé
  */
-function sendOffer() {
-    app.get('/', (req, res) => {
-        if (queue[1].length != 0) {
-            socket.to(queue[1][0].id).emit('offer.receive');
-        }
-    });
-    app.get(routeName, (req, res) => {
-        if (queue[0].length != 0) {
-            socket.to(queue[0][0].id).emit('offer.receive');
-        }
-    });
+function sendOffer(data, channel) {
+    if (channel === 0 && queue[1].length != 0)
+        this.to(queue[1][0].id).emit('offer.receive', data);
+    else if (channel === 1 && queue[0].length != 0)
+        this.to(queue[0][0].id).emit('offer.receive', data);
 }
 
 /**
  * Transmet la réponse au socket appairé
  */
-function sendAnswer() {
-    app.get('/', (req, res) => {
-        if (queue[1].length != 0) {
-            socket.to(queue[1][0].id).emit('answer.receive');
-        }
-    });
-    app.get(routeName, (req, res) => {
-        if (queue[0].length != 0) {
-            socket.to(queue[0][0].id).emit('answer.receive');
-        }
-    });
-    shift(queue[0]);
-    shift(queue[1]);
+function sendAnswer(data, channel) {
+    if (channel === 0 && queue[1].length != 0)
+        this.to(queue[1][0].id).emit('answer.receive', data);
+    else if (channel === 1 && queue[0].length != 0)
+        this.to(queue[0][0].id).emit('answer.receive', data);
+
+
+
+    queue[0].shift();
+    queue[1].shift();
+
+    console.log("---------------");
+    console.log("## P2P connection established ##")
+    console.log('Number of 1A: ');
+    console.log(queue[0].length);
+    console.log('Number of 2A-3A: ');
+    console.log(queue[1].length);
 }
 
 /**
  * Appelée quand un socket se déconnecte
  */
 function disconnect() {
-    if (routeName == "/channel2")
+    let isInQueue1 = queue[1].indexOf(this);
+
+    if (isInQueue1 != -1)
         queue[1].splice(queue[1].indexOf(this), 1);
-    else
-        queue[0].splice(queue[0].indexOf(this), 1);
+    else {
+        let isInQueue2 = queue[0].indexOf(this);
+        if (isInQueue2 != -1)
+            queue[0].splice(queue[0].indexOf(this), 1);
+    }
 
     this.broadcast.emit("Disconnect");
 }
