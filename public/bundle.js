@@ -6,33 +6,64 @@ let socket = io({
     rejectUnauthorized: false
 });
 
-const video = document.querySelector('#host-video');
+let hostVideo = document.querySelector('#host-video');
+let remoteVideo = document.querySelector('#remote-video');
 
-var pseudo;
+let info = new Boolean(true);
+
+
+// Sert à stocker les variables globales
+var client = {
+    connected: false,
+    peer: null,
+    pseudo: ""
+};
+
 
 if (navigator.mediaDevices.getUserMedia) {
-    navigator.mediaDevices.getUserMedia({ video: true })
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         .then(function(stream) {
-            video.srcObject = stream;
+            hostVideo.srcObject = stream;
+            hostVideo.play();
         })
         .catch(function(err0r) {
             console.log("Something went wrong!");
         });
 }
 
-// Sert à stocker les variables globales
-var client = {
-    connected: false,
-    peer: null
-};
 
+/**
+ * Convert all "\n" or "\r\n" or "\r" to "<br>" in a string.
+ * 
+ * @param str: the string that will be modified.
+ * @return the string without the characters specified and with the <br>
+ */
+function nl2br(str) {
+    return str.replace(/(\r\n|\r|\n)/g, '<br>');
+}
 
+/**
+ * add a listener to allow "Ctrl + Enter" to send a message in the chat
+ */
+document.getElementById('message').addEventListener('keydown', function(e) {
+    // 13 for enter
+    if (!e.ctrlKey && e.keyCode === 13) {
+        e.preventDefault();
+        sendMessage();
+    } else if (e.ctrlKey && e.keyCode === 13)
+        document.getElementById('message').value += "\n";
+});
+
+// Add a listener to validate the username
 document.getElementById('validate').onclick = validateLogin;
 
+/**
+ * Validate the login formular and emit a signal to the socket
+ */
 function validateLogin() {
     var inputPseudo = document.getElementById('pseudo');
     var pseudoError = document.getElementById('pseudo-error');
-    pseudo = inputPseudo.value;
+    pseudo = nl2br(inputPseudo.value);
     channel = parseInt(document.getElementById('annee').value);
 
     if (pseudo.length < 3) {
@@ -47,33 +78,34 @@ function validateLogin() {
     socket.emit('login', channel);
 }
 
+// Add a listener to send a message in the chat
 document.getElementById('send').onclick = sendMessage;
 
+/**
+ * Send the message in the chat.
+ */
 function sendMessage() {
-    var message = "Salut !"
-    var messageBlock = "";
-    messageBlock += '<div class="message">';
-    messageBlock += '   <div class="username">';
-    messageBlock += pseudo;
-    messageBlock += '</div>';
-    messageBlock += '   <div class="msg-content">';
-    messageBlock += message;
-    messageBlock += '   </div>';
-    messageBlock += '</div>';
-    document.getElementById("chat").insertAdjacentHTML('afterend', messageBlock);
-    client.peer.send(message);
+    if (client.connected) {
+        var inputMsg = document.getElementById('message');
+        var message = nl2br(inputMsg.value);
+        inputMsg.value = '';
+        var messageBlock = "";
+        messageBlock += '<div class="message">';
+        messageBlock += '   <div class="username">';
+        messageBlock += pseudo;
+        messageBlock += '</div>';
+        messageBlock += '   <div class="msg-content">';
+        messageBlock += message;
+        messageBlock += '   </div>';
+        messageBlock += '</div>';
+        document.getElementById("chat").innerHTML += messageBlock;
+        client.peer.send(message);
+    }
 }
 
-function receiveMessage() {
-    var messageBlock = "";
-    messageBlock += '<div class="message">';
-    messageBlock += '   <div class="username"></div>';
-    messageBlock += '   <div class="msg-content">';
-    messageBlock += '       Salut!';
-    messageBlock += '   </div>';
-    messageBlock += '</div>';
-    document.getElementById("chat").insertAdjacentHTML('afterend', messageBlock);
-}
+// function CreateVideo(stream) {}
+
+
 
 
 /**
@@ -84,6 +116,32 @@ function receiveMessage() {
  */
 function createPeer(initiator) {
     let peer = new Peer({ initiator: initiator, trickle: false });
+    peer.on('data', (data) => {
+        if (info) {
+            var messageBlock = "";
+            messageBlock += '<div class="info">';
+            messageBlock += '   En liaison avec ' + data;
+            messageBlock += '</div>';
+            document.getElementById("chat").innerHTML += messageBlock;
+            client.pseudo = data;
+            info = false;
+        } else {
+            var messageBlock = "";
+            messageBlock += '<div class="message msg-peer">';
+            messageBlock += '   <div class="username">';
+            messageBlock += client.pseudo;
+            messageBlock += '</div>';
+            messageBlock += '   <div class="msg-content">';
+            messageBlock += data;
+            messageBlock += '   </div>';
+            messageBlock += '</div>';
+            document.getElementById("chat").innerHTML += messageBlock;
+        }
+    });
+    peer.on('stream', function(stream) {
+        alert("OK");
+        startVideo(stream);
+    });
 
     return peer;
 }
@@ -102,10 +160,6 @@ function initiatePeer() {
     });
 
     client.peer = peer;
-
-    peer.on('data', (data) => {
-        alert("OK");
-    });
 }
 
 /**
@@ -123,10 +177,7 @@ function receiveOffer(offer) {
 
     peer.signal(offer);
     client.peer = peer;
-
-    peer.on('data', (data) => {
-        alert("OK");
-    });
+    setTimeout(() => { client.peer.send(pseudo); }, 500);
 }
 
 /**
@@ -135,17 +186,24 @@ function receiveOffer(offer) {
 function signalAnswer(answer) {
     client.connected = true;
     client.peer.signal(answer);
-    alert("Pépito1!");
-    client.peer.send("Pépito!");
-    alert("Pépito2!");
+    setTimeout(() => { client.peer.send(pseudo); }, 500);
 }
-
-
 
 /**
  * Affiche le flux vidéo sur la page
  */
-function startVideo() {}
+function startVideo(stream) {
+    remoteVideo.srcObject = stream;
+    remoteVideo.setAttribute('class', 'embed-responsive-item');
+    remoteVideo.play();
+
+    remoteVideo.addEventListener('click', () => {
+        if (remoteVideo.volume != 0)
+            remoteVideo.volume = 0;
+        else
+            remoteVideo.volume = 1;
+    });
+}
 
 /**
  * Arrete la video
