@@ -28,7 +28,7 @@ function debug(str) {
     }
 }
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
         hostVideo.srcObject = stream;
         hostVideo.play();
@@ -77,6 +77,8 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             document.getElementById('connection').style.display = "none";
 
             socket.emit('login', channel);
+
+            msgSearch();
         }
 
         // Add a listener to send a message in the chat
@@ -86,16 +88,15 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
          * Send the message in the chat.
          */
         function sendMessage() {
-            if (client.connected && (Date.now() - lastSendingTime) > 1000) {
+            if (client.connected && !info && (Date.now() - lastSendingTime) > 1000) {
                 lastSendingTime = Date.now();
                 var inputMsg = document.getElementById('message');
                 var message = nl2br(inputMsg.value);
-                if(message != "")
-                {
+                if (message != "") {
                     inputMsg.value = '';
                     var messageBlock = "";
-                    messageBlock += '<div class="message">';
-                    messageBlock += '   <div class="username">';
+                    messageBlock += '<div class="message msg-left">';
+                    messageBlock += '   <div class="username" style="color:#142ab8">';
                     messageBlock += myPseudo;
                     messageBlock += '</div>';
                     messageBlock += '   <div class="msg-content">';
@@ -103,6 +104,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                     messageBlock += '   </div>';
                     messageBlock += '</div>';
                     document.getElementById("chat").innerHTML += messageBlock;
+                    document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight - document.getElementById("chat").clientHeight;
                     client.peer.send(message);
                 }
             }
@@ -124,17 +126,19 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
 
             peer.on('data', (data) => {
                 if (info) {
+                    var divChat = document.getElementById('chat');
+                    divChat.innerHTML = "";
                     var messageBlock = "";
                     messageBlock += '<div class="info">';
-                    messageBlock += '   Connection avec ' + data;
+                    messageBlock += '   En connection avec ' + data;
                     messageBlock += '</div>';
-                    document.getElementById("chat").innerHTML += messageBlock;
+                    divChat.innerHTML += messageBlock;
                     client.pseudo = data;
                     info = false;
                 } else {
                     var messageBlock = "";
-                    messageBlock += '<div class="message msg-peer">';
-                    messageBlock += '   <div class="username">';
+                    messageBlock += '<div class="message">';
+                    messageBlock += '   <div class="username" style="color:#b814a2">';
                     messageBlock += client.pseudo;
                     messageBlock += '</div>';
                     messageBlock += '   <div class="msg-content">';
@@ -143,6 +147,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                     messageBlock += '</div>';
                     document.getElementById("chat").innerHTML += messageBlock;
                 }
+                document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight - document.getElementById("chat").clientHeight;
             });
 
             return peer;
@@ -204,17 +209,34 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         /**
          * Arrete la video
          */
-        function removeVideo() {}
+        function removeVideo() {
+            remoteVideo.pause();
+            remoteVideo.srcObject = null;
+        }
+
+        function msgSearch() {
+            var divChat = document.getElementById('chat');
+            divChat.innerHTML = "";
+            var messageBlock = "";
+            messageBlock += '<div class="info">';
+            messageBlock += "   En attente d'un utilisateur";
+            messageBlock += '</div>';
+            divChat.innerHTML += messageBlock;
+        }
 
         /**
          * Met fin à la connexion p2p
          */
         function destroyPeer() {
+            debug("destroy");
             removeVideo();
+            msgSearch();
 
             client.connected = false;
+            info = true;
             if (client.peer) {
                 client.peer.destroy();
+                socket.emit("queue.rejoin", channel);
             }
         }
 

@@ -30,7 +30,7 @@ var queue = [
     [],
     []
 ];
-var currentCalls = []; //utilité ?
+
 
 /**
  * Initialise un socket et le met dans la file d'attente
@@ -80,9 +80,10 @@ function updateQueue() {
  * les remet dans la file d'attente
  * @param socket 
  */
-function rejoinQueue(socket, channel) {
-    //TODO stop call
-    joinQueue(socket, channel);
+function rejoinQueue(channel) {
+    console.log("Channel :");
+    console.log(channel);
+    joinQueue(this, channel);
 }
 
 /**
@@ -111,12 +112,15 @@ function disconnect() {
         let isInQueue2 = queue[0].indexOf(this);
         if (isInQueue2 != -1)
             queue[0].splice(queue[0].indexOf(this), 1);
+        else {
+            if (this.pairedSocket) {
+                this.pairedSocket.emit("peer.destroy");
+            }
+        }
     }
-
-    this.broadcast.emit("Disconnect");
 }
 
-io.on('connection', function (socket) {
+io.on('connection', function(socket) {
     socket.on("login", login);
     socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);

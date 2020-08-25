@@ -25,18 +25,24 @@
 }
 
 .username {
-    font-size: 1.7rem;
+    font-size: 1rem;
 }
 
 .msg-content {
-    font-size: 1.2rem;
+    font-size: 0.7rem;
 }
 
 .message {
-    margin-bottom: 30px;
+    margin-bottom: 5px;
     padding: 0 50px;
 }
 
-.msg-peer {
+.msg-left {
     text-align: right;
+}
+
+.info {
+    text-align: center;
+    font-size: 0.7rem;
+    color: #5a5a5a;
 }
