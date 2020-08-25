@@ -170,6 +170,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 
             peer.signal(offer);
             client.peer = peer;
+            client.connected = true;
             setTimeout(() => { client.peer.send(pseudo); }, 1000);
         }
 
