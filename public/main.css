@@ -46,3 +46,11 @@
     font-size: 0.7rem;
     color: #5a5a5a;
 }
+
+#roulette {
+    background-color: rgba(49, 146, 232, 0.7);
+    border-color: transparent;
+    border-radius: 15%;
+    color: white;
+    display: none;
+}

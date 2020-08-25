@@ -30,6 +30,9 @@
 
     <div id="container-sections" style="display: flex; width: 100%; top: 0; bottom: 0; position: absolute;">
         <div id="section-video" style="background-color: black;">
+            <div style="position: fixed; left: 30px; top: 25px; width: 100px; height: 70px; z-index: 3; display: flex; justify-content:center;">
+                <input type="button" id="roulette" value="Roulette" style="width: 100%;">
+            </div>
             <div id="host-div">
                 <video muted=true id="host-video" style="position: fixed; left: 0; bottom: 0; width: 15%; z-index: 2;"></video>
             </div>
@@ -38,7 +41,7 @@
             </div>
         </div>
         <div id="section-chat" style="background-color: white;">
-            <div id="chat" style="height:80%;width:100%; font:16px/26px Georgia, Garamond, Serif;overflow:auto;"></div>
+            <div id="chat" style="height:80%;width:100%; font:16px/26px Georgia, Garamond, Serif;overflow-y: auto;overflow-x: hidden;"></div>
             <div style="bottom: 0; position: absolute; display: flex; justify-content:center; width: 30%; flex-direction: column; height: 20%;">
                 <div style="margin: 0px auto; width: 90%; display: flex; justify-content:center;">
                     <textarea name="message" id="message" cols="20" rows="3" style="resize: none; width: 100%;"></textarea>

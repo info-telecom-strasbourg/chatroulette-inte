@@ -28,6 +28,10 @@ function debug(str) {
     }
 }
 
+function htmlEntities(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
         hostVideo.srcObject = stream;
@@ -64,7 +68,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         function validateLogin() {
             var inputPseudo = document.getElementById('pseudo');
             var pseudoError = document.getElementById('pseudo-error');
-            myPseudo = nl2br(inputPseudo.value);
+            myPseudo = htmlEntities(inputPseudo.value);
             channel = parseInt(document.getElementById('annee').value);
 
             if (myPseudo.length < 3) {
@@ -73,12 +77,21 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 pseudoError.style.display = "block";
                 return;
             }
-
             document.getElementById('connection').style.display = "none";
 
             socket.emit('login', channel);
 
             msgSearch();
+        }
+
+        // Add listener for roulette button
+        document.getElementById('roulette').onclick = roulette;
+
+        /**
+         * Reroll the users
+         */
+        function roulette() {
+            socket.emit('reroll');
         }
 
         // Add a listener to send a message in the chat
@@ -91,7 +104,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             if (client.connected && !info && (Date.now() - lastSendingTime) > 1000) {
                 lastSendingTime = Date.now();
                 var inputMsg = document.getElementById('message');
-                var message = nl2br(inputMsg.value);
+                var message = htmlEntities(nl2br(inputMsg.value));
                 if (message != "") {
                     inputMsg.value = '';
                     var messageBlock = "";
@@ -135,6 +148,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                     divChat.innerHTML += messageBlock;
                     client.pseudo = data;
                     info = false;
+                    document.getElementById('roulette').style.display = "block";
                 } else {
                     var messageBlock = "";
                     messageBlock += '<div class="message">';
@@ -234,6 +248,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 
             client.connected = false;
             info = true;
+            document.getElementById('roulette').style.display = "none";
             if (client.peer) {
                 client.peer.destroy();
                 socket.emit("queue.rejoin", channel);

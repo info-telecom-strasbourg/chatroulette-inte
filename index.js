@@ -81,8 +81,6 @@ function updateQueue() {
  * @param socket 
  */
 function rejoinQueue(channel) {
-    console.log("Channel :");
-    console.log(channel);
     joinQueue(this, channel);
 }
 
@@ -120,11 +118,17 @@ function disconnect() {
     }
 }
 
+function reroll() {
+    this.pairedSocket.emit("peer.destroy");
+    this.emit("peer.destroy");
+}
+
 io.on('connection', function(socket) {
     socket.on("login", login);
     socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);
     socket.on("answer", sendAnswer);
+    socket.on("reroll", reroll);
     socket.on("disconnect", disconnect);
 });
 
