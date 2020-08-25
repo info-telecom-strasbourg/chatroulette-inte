@@ -15,7 +15,13 @@ var client = {
     pseudo: ""
 };
 
+DEBUG = true;
 
+function debug(str) {
+    if (DEBUG) {
+        console.log(str);
+    }
+}
 
 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
@@ -35,7 +41,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         /**
          * add a listener to allow "Ctrl + Enter" to send a message in the chat
          */
-        document.getElementById('message').addEventListener('keydown', function(e) {
+        document.getElementById('message').addEventListener('keydown', function (e) {
             // 13 for enter
             if (!e.ctrlKey && e.keyCode === 13) {
                 e.preventDefault();
@@ -101,15 +107,12 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
          * @return nouvelle instance de Peer
          */
         function createPeer(initiator) {
-            let peer = new Peer({ initiator: initiator, trickle: false });
-            if (initiator)
-                for (const track of stream.getTracks()) {
-                    peer.addTrack(track, stream);
-                }
+            let peer = new Peer({ initiator: initiator, trickle: false, stream: stream });
+
             peer.on('stream', (stream) => {
-                if (!initiator)
-                    startVideo(stream);
+                startVideo(stream);
             });
+
             peer.on('data', (data) => {
                 if (info) {
                     var messageBlock = "";
@@ -140,12 +143,13 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
          * Appelée si ce client doit être l'initiateur de la connection
          */
         function initiatePeer() {
+            debug("Init peer");
             client.connected = false;
             let peer = createPeer(true);
 
-            peer.on('signal', function(data) {
-                if (!peer.connected) {
-                    socket.emit('offer', data, channel);
+            peer.on('signal', function (data) {
+                if (!client.connected) {
+                    socket.emit('offer', data);
                 }
             });
 
@@ -156,27 +160,28 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
          * Appelée si ce client doit attendre une offre
          */
         function receiveOffer(offer) {
+            debug("Receive offer");
+
             let peer = createPeer(false);
 
             peer.on('signal', (data) => {
-                if (!client.connected) {
-                    client.connected = true;
-                    socket.emit('answer', data, channel);
-                }
+                socket.emit('answer', data);
             });
 
             peer.signal(offer);
             client.peer = peer;
-            setTimeout(() => { client.peer.send(pseudo); }, 500);
+            setTimeout(() => { client.peer.send(pseudo); }, 1000);
         }
 
         /**
          * Appelée quand le client reçoit une réponse
          */
         function signalAnswer(answer) {
+            debug("Signal answer");
+
             client.connected = true;
             client.peer.signal(answer);
-            setTimeout(() => { client.peer.send(pseudo); }, 500);
+            setTimeout(() => { client.peer.send(pseudo); }, 1000);
         }
 
         /**
@@ -190,7 +195,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         /**
          * Arrete la video
          */
-        function removeVideo() {}
+        function removeVideo() { }
 
         /**
          * Met fin à la connexion p2p
@@ -209,6 +214,6 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         socket.on("answer.receive", signalAnswer);
         socket.on("peer.destroy", destroyPeer)
     })
-    .catch(function(err) {
+    .catch(function (err) {
         document.write("Veuillez nous autoriser à utiliser votre caméra et votre microphone si vous souhaitez utiliser ce service.");
     });

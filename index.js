@@ -36,11 +36,6 @@ var currentCalls = []; //utilité ?
  * Initialise un socket et le met dans la file d'attente
  */
 function login(channel) {
-    if (channel === 0 && queue[1].length != 0)
-        this.emit('peer.init');
-    else if (channel === 1 && queue[0].length != 0)
-        this.emit('peer.init');
-
     joinQueue(this, channel);
 }
 
@@ -49,16 +44,35 @@ function login(channel) {
  * @param socket 
  */
 function joinQueue(socket, channel) {
-    if (channel === 0)
-        queue[0].push(socket);
-    else if (channel === 1)
-        queue[1].push(socket);
+    if (channel < 0 || channel > 1) return;
+
+    socket.channelId = channel;
+    queue[channel].push(socket);
+
+    updateQueue();
+
     console.log("---------------");
     console.log("## Login ##");
     console.log('Number of 1A: ');
     console.log(queue[0].length);
     console.log('Number of 2A-3A: ');
     console.log(queue[1].length);
+}
+
+function updateQueue() {
+    if (queue[1].length > 0 && queue[0].length > 0) {
+        let pair = {
+            s1: queue[0].shift(),
+            s2: queue[1].shift()
+        }
+        pair.s1.pairedSocket = pair.s2;
+        pair.s2.pairedSocket = pair.s1;
+
+        pair.s2.emit("peer.init");
+
+        console.log("---------------");
+        console.log("## Creating P2P connection ##")
+    }
 }
 
 /**
@@ -74,33 +88,15 @@ function rejoinQueue(socket, channel) {
 /**
  * Transmet l'offre au socket appairé
  */
-function sendOffer(data, channel) {
-    if (channel === 0 && queue[1].length != 0)
-        this.to(queue[1][0].id).emit('offer.receive', data);
-    else if (channel === 1 && queue[0].length != 0)
-        this.to(queue[0][0].id).emit('offer.receive', data);
+function sendOffer(data) {
+    this.pairedSocket.emit('offer.receive', data);
 }
 
 /**
  * Transmet la réponse au socket appairé
  */
-function sendAnswer(data, channel) {
-    if (channel === 0 && queue[1].length != 0)
-        this.to(queue[1][0].id).emit('answer.receive', data);
-    else if (channel === 1 && queue[0].length != 0)
-        this.to(queue[0][0].id).emit('answer.receive', data);
-
-
-
-    queue[0].shift();
-    queue[1].shift();
-
-    console.log("---------------");
-    console.log("## P2P connection established ##")
-    console.log('Number of 1A: ');
-    console.log(queue[0].length);
-    console.log('Number of 2A-3A: ');
-    console.log(queue[1].length);
+function sendAnswer(data) {
+    this.pairedSocket.emit("answer.receive", data);
 }
 
 /**
@@ -120,7 +116,7 @@ function disconnect() {
     this.broadcast.emit("Disconnect");
 }
 
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
     socket.on("login", login);
     socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);
