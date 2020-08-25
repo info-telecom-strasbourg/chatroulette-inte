@@ -8,6 +8,7 @@ let remoteVideo = document.querySelector('#remote-video');
 let info = true;
 
 
+
 // Sert à stocker les variables globales
 var client = {
     connected: false,
@@ -19,6 +20,12 @@ var lastSendingTime = Date.now();
 
 
 var myPseudo;
+
+let couleursPseudo = ["#B814A2", "#b331e8", "#142ab8", "#31a8e8", "#31e89d", "#31e834", "#206d19", "#dcd626", "#dc7e26", "#dc2626"];
+let myPseudoColor = Math.floor(Math.random() * 10);
+let peerPseudoColor = myPseudoColor;
+while (peerPseudoColor === myPseudoColor)
+    peerPseudoColor = Math.floor(Math.random() * 10);
 
 DEBUG = true;
 
@@ -109,7 +116,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                     inputMsg.value = '';
                     var messageBlock = "";
                     messageBlock += '<div class="message msg-left">';
-                    messageBlock += '   <div class="username" style="color:#142ab8">';
+                    messageBlock += '   <div class="username" style="color:' + couleursPseudo[myPseudoColor] + '">';
                     messageBlock += myPseudo;
                     messageBlock += '</div>';
                     messageBlock += '   <div class="msg-content">';
@@ -152,7 +159,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 } else {
                     var messageBlock = "";
                     messageBlock += '<div class="message">';
-                    messageBlock += '   <div class="username" style="color:#b814a2">';
+                    messageBlock += '   <div class="username" style="color:' + couleursPseudo[peerPseudoColor] + '">';
                     messageBlock += client.pseudo;
                     messageBlock += '</div>';
                     messageBlock += '   <div class="msg-content">';
