@@ -5,7 +5,7 @@ let socket = io();
 let hostVideo = document.querySelector('#host-video');
 let remoteVideo = document.querySelector('#remote-video');
 
-let info = new Boolean(true);
+let info = true;
 
 
 // Sert à stocker les variables globales
@@ -15,6 +15,11 @@ var client = {
     pseudo: ""
 };
 
+var lastSendingTime = Date.now();
+
+
+var myPseudo;
+
 DEBUG = true;
 
 function debug(str) {
@@ -23,7 +28,7 @@ function debug(str) {
     }
 }
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+navigator.mediaDevices.getUserMedia({ video: true, audio: false })
     .then(stream => {
         hostVideo.srcObject = stream;
         hostVideo.play();
@@ -41,7 +46,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         /**
          * add a listener to allow "Ctrl + Enter" to send a message in the chat
          */
-        document.getElementById('message').addEventListener('keydown', function (e) {
+        document.getElementById('message').addEventListener('keydown', function(e) {
             // 13 for enter
             if (!e.ctrlKey && e.keyCode === 13) {
                 e.preventDefault();
@@ -59,10 +64,10 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         function validateLogin() {
             var inputPseudo = document.getElementById('pseudo');
             var pseudoError = document.getElementById('pseudo-error');
-            pseudo = nl2br(inputPseudo.value);
+            myPseudo = nl2br(inputPseudo.value);
             channel = parseInt(document.getElementById('annee').value);
 
-            if (pseudo.length < 3) {
+            if (myPseudo.length < 3) {
                 if (!inputPseudo.classList.contains('is-invalid'))
                     inputPseudo.classList.add('is-invalid');
                 pseudoError.style.display = "block";
@@ -81,21 +86,25 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
          * Send the message in the chat.
          */
         function sendMessage() {
-            if (client.connected) {
+            if (client.connected && (Date.now() - lastSendingTime) > 1000) {
+                lastSendingTime = Date.now();
                 var inputMsg = document.getElementById('message');
                 var message = nl2br(inputMsg.value);
-                inputMsg.value = '';
-                var messageBlock = "";
-                messageBlock += '<div class="message">';
-                messageBlock += '   <div class="username">';
-                messageBlock += pseudo;
-                messageBlock += '</div>';
-                messageBlock += '   <div class="msg-content">';
-                messageBlock += message;
-                messageBlock += '   </div>';
-                messageBlock += '</div>';
-                document.getElementById("chat").innerHTML += messageBlock;
-                client.peer.send(message);
+                if(message != "")
+                {
+                    inputMsg.value = '';
+                    var messageBlock = "";
+                    messageBlock += '<div class="message">';
+                    messageBlock += '   <div class="username">';
+                    messageBlock += myPseudo;
+                    messageBlock += '</div>';
+                    messageBlock += '   <div class="msg-content">';
+                    messageBlock += message;
+                    messageBlock += '   </div>';
+                    messageBlock += '</div>';
+                    document.getElementById("chat").innerHTML += messageBlock;
+                    client.peer.send(message);
+                }
             }
         }
 
@@ -147,7 +156,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             client.connected = false;
             let peer = createPeer(true);
 
-            peer.on('signal', function (data) {
+            peer.on('signal', function(data) {
                 if (!client.connected) {
                     socket.emit('offer', data);
                 }
@@ -171,7 +180,6 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             peer.signal(offer);
             client.peer = peer;
             client.connected = true;
-            setTimeout(() => { client.peer.send(pseudo); }, 1000);
         }
 
         /**
@@ -182,7 +190,6 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 
             client.connected = true;
             client.peer.signal(answer);
-            setTimeout(() => { client.peer.send(pseudo); }, 1000);
         }
 
         /**
@@ -191,12 +198,13 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         function startVideo(stream) {
             remoteVideo.srcObject = stream;
             remoteVideo.play();
+            setTimeout(() => { client.peer.send(myPseudo) }, 1000);
         }
 
         /**
          * Arrete la video
          */
-        function removeVideo() { }
+        function removeVideo() {}
 
         /**
          * Met fin à la connexion p2p
@@ -215,6 +223,6 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         socket.on("answer.receive", signalAnswer);
         socket.on("peer.destroy", destroyPeer)
     })
-    .catch(function (err) {
+    .catch(function(err) {
         document.write("Veuillez nous autoriser à utiliser votre caméra et votre microphone si vous souhaitez utiliser ce service.");
     });
