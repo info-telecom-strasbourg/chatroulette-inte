@@ -17,7 +17,7 @@ var client = {
 
 
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
         hostVideo.srcObject = stream;
         hostVideo.play();
@@ -103,7 +103,9 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         function createPeer(initiator) {
             let peer = new Peer({ initiator: initiator, trickle: false });
             if (initiator)
-                peer.addStream(stream);
+                for (const track of stream.getTracks()) {
+                    peer.addTrack(track, stream);
+                }
             peer.on('stream', (stream) => {
                 if (!initiator)
                     startVideo(stream);
@@ -112,7 +114,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                 if (info) {
                     var messageBlock = "";
                     messageBlock += '<div class="info">';
-                    messageBlock += '   En liaison avec ' + data;
+                    messageBlock += '   Connection avec ' + data;
                     messageBlock += '</div>';
                     document.getElementById("chat").innerHTML += messageBlock;
                     client.pseudo = data;

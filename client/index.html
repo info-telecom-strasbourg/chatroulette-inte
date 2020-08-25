@@ -29,16 +29,15 @@
     </div>
 
     <div id="container-sections" style="display: flex; width: 100%; top: 0; bottom: 0; position: absolute;">
-        <div id="section-video" style="background-color: #7e9dce;">
+        <div id="section-video" style="background-color: black;">
             <div>
-                <video id="host-video"></video>
+                <video muted=true id="host-video" style="position: fixed; left: 0; bottom: 0; width: 15%; z-index: 2;"></video>
             </div>
-            <!-- style="position: fixed; left: 0; bottom: 0; min-width: 70%; min-height: 100%;" -->
-            <div>
-                <video id="remote-video" class="embed-responsive-item"></video>
+            <div style="display: flex; align-items: center;">
+                <video id="remote-video" class="embed-responsive-item" style="position: fixed; left: 0; top: 0; width: 70%; min-height: 100%; z-index: 1;"></video>
             </div>
         </div>
-        <div id="section-chat" style="background-color: #c1d1ea;">
+        <div id="section-chat" style="background-color: white;">
             <div id="chat"></div>
             <div style="bottom: 0; position: absolute; display: flex; justify-content:center; width: 30%; flex-direction: column; margin-bottom: 30px;">
                 <div style="margin: 0px auto; width: 90%; display: flex; justify-content:center;">
