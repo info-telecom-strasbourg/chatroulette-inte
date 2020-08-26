@@ -22,10 +22,9 @@ var lastSendingTime = Date.now();
 var myPseudo;
 
 let couleursPseudo = ["#B814A2", "#b331e8", "#142ab8", "#31a8e8", "#31e89d", "#31e834", "#206d19", "#dcd626", "#dc7e26", "#dc2626"];
-let myPseudoColor = Math.floor(Math.random() * 10);
-let peerPseudoColor = myPseudoColor;
-while (peerPseudoColor === myPseudoColor)
-    peerPseudoColor = Math.floor(Math.random() * 10);
+let myPseudoColor;
+let peerPseudoColor;
+
 
 DEBUG = true;
 
@@ -146,6 +145,10 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
 
             peer.on('data', (data) => {
                 if (info) {
+                    myPseudoColor = Math.floor(Math.random() * 10);
+                    peerPseudoColor = myPseudoColor;
+                    while (peerPseudoColor === myPseudoColor)
+                        peerPseudoColor = Math.floor(Math.random() * 10);
                     var divChat = document.getElementById('chat');
                     divChat.innerHTML = "";
                     var messageBlock = "";

@@ -11,7 +11,7 @@
 <body>
     <div id="connection" class="modal">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content" style="padding: 10px; display: flex; justify-content: center;">
                 <label for="pseudo">Pseudo</label>
                 <input type="text" id="pseudo">
                 <span id="pseudo-error" class="invalid-feedback" role="alert" style="display: none;">
@@ -23,7 +23,7 @@
                     <option value="0" selected>1A</option>
                     <option value="1">2A/3A</option>
                 </select>
-                <input type="button" id="validate" value="Valider">
+                <input type="button" class="button-send" id="validate" value="Valider" style="margin:15px auto 0 auto;">
             </div>
         </div>
     </div>
@@ -34,20 +34,20 @@
                 <input type="button" id="roulette" value="Roulette" style="width: 100%;">
             </div>
             <div id="host-div">
-                <video muted=true id="host-video" style="position: fixed; left: 0; bottom: 0; width: 15%; z-index: 2;"></video>
+                <video muted=true id="host-video" style="position: fixed; width: 15%; z-index: 2;"></video>
             </div>
             <div style="display: flex; align-items: center;">
-                <video id="remote-video" class="embed-responsive-item" style="position: fixed; left: 0; top: 0; width: 70%; min-height: 100%; z-index: 1;"></video>
+                <video id="remote-video" class="embed-responsive-item" style="position: fixed; left: 0; top: 0; z-index: 1;"></video>
             </div>
         </div>
         <div id="section-chat" style="background-color: white;">
-            <div id="chat" style="height:80%;width:100%; font:16px/26px Georgia, Garamond, Serif;overflow-y: auto;overflow-x: hidden;"></div>
-            <div style="bottom: 0; position: absolute; display: flex; justify-content:center; width: 30%; flex-direction: column; height: 20%;">
-                <div style="margin: 0px auto; width: 90%; display: flex; justify-content:center;">
-                    <textarea name="message" id="message" cols="20" rows="3" style="resize: none; width: 100%;"></textarea>
+            <div id="chat" style="width:100%; font:16px/26px Georgia, Garamond, Serif;overflow-y: auto;overflow-x: hidden;"></div>
+            <div id="container-message" style="bottom: 0; position: absolute; display: flex; justify-content:center;">
+                <div id="msg-box" style="margin: 0px auto; display: flex; justify-content:center; height: 70px;">
+                    <textarea name="message" id="message" style="resize: none; width: 100%;"></textarea>
                 </div>
-                <div style="margin: 0px auto; width: 90%; display: flex; justify-content:center;">
-                    <input type="button" id="send" value="Envoyer" style="width: 100%;">
+                <div id="btn-box" style="margin: 0px auto; display: flex; justify-content:center;">
+                    <input type="button" class="button-send" id="send" value="Envoyer">
                 </div>
             </div>
         </div>
