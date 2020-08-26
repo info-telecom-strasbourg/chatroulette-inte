@@ -34,11 +34,43 @@ function debug(str) {
     }
 }
 
+/**
+ * Convert emoji in the chat
+ */
+function addEmojies(str) {
+    return String(str).replace(/(^xd|^xD|^XD| xd| xD| XD|:joy:)/g, ' &#129315;')
+        .replace(/(^:\)| :\)|:slight_smile:)/g, ' &#128578;')
+        .replace(/(^:D| :D|:smile:)/g, ' &#128516;')
+        .replace(/(^;\)| ;\)|:wink:)/g, ' &#128521;')
+        .replace(/(^:\*|\s:\*|:kiss:)/g, ' &#128536;')
+        .replace(/(^;p|^:p|^:P|^;P|\s;p|\s:p|\s:P|\s;P)/g, ' &#128540;')
+        .replace(/(:thinking:|:think:)/g, ' &#129300;')
+        .replace(/(:see_no_evil:)/g, ' &#128584;')
+        .replace(/(:ok:)/g, ' &#128076;')
+        .replace(/(:yes:)/g, ' &#128077;')
+        .replace(/(^x\)|^X\)|\sx\)|\sX\)|:laughing:)/g, ' &#128518;')
+        .replace(/(^8O|\s8O|:flushed:)/g, ' &#128558;')
+        .replace(/(^:_\(|^;-;|\s;-;|\s:_\(|:sob:)/g, ' &#128557;')
+        .replace(/(^:O|\s:O|:scream:)/g, ' &#128561;')
+        .replace(/(:open_mouth:|^:o|\s:o)/g, ' &#128558;')
+        .replace(/(^:\(|\s:\(|:sad:)/g, ' &#128577;')
+        .replace(/(^:\||\s:\||:neutral_face:)/g, ' &#128529;')
+        .replace(/(^B\)|^8\)|\sB\)|\s8\)|:sunglasses:)/g, ' &#128526;')
+        .replace(/(^xp|^xP|^Xp|^XP|\sxp|\sxP|\sXp|\sXP|:tongue:)/g, ' &#128541;')
+        .replace(/(^0:\)|^0:D|\s0:\)|\s0:D|:angel:)/g, ' &#128519;')
+        .replace(/(^\*-\*|\s\*-\*|:star_struck:)/g, ' &#129321;')
+        .replace(/(^&lt;3|\s&lt;3|:heart:)/g, ' &#10084;&#65039;')
+        .replace(/(:eye_heart:)/g, ' &#128525;')
+        .replace(/(^x\(|^X\(|\sx\(|\sX\(|:skull:)/g, ' &#128128;');
+}
+
+
+
 function htmlEntities(str) {
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+navigator.mediaDevices.getUserMedia({ video: true, audio: false })
     .then(stream => {
         hostVideo.srcObject = stream;
         hostVideo.play();
@@ -74,7 +106,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         function validateLogin() {
             var inputPseudo = document.getElementById('pseudo');
             var pseudoError = document.getElementById('pseudo-error');
-            myPseudo = htmlEntities(inputPseudo.value);
+            myPseudo = addEmojies(htmlEntities(inputPseudo.value));
 
             if (myPseudo.length < 3) {
                 if (!inputPseudo.classList.contains('is-invalid'))
@@ -109,7 +141,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             if (client.connected && !info && (Date.now() - lastSendingTime) > 1000) {
                 lastSendingTime = Date.now();
                 var inputMsg = document.getElementById('message');
-                var message = htmlEntities(nl2br(inputMsg.value));
+                var message = nl2br(addEmojies(htmlEntities(inputMsg.value)));
                 if (message != "") {
                     inputMsg.value = '';
                     var messageBlock = "";
