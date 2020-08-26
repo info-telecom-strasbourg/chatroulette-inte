@@ -75,7 +75,6 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             var inputPseudo = document.getElementById('pseudo');
             var pseudoError = document.getElementById('pseudo-error');
             myPseudo = htmlEntities(inputPseudo.value);
-            channel = parseInt(document.getElementById('annee').value);
 
             if (myPseudo.length < 3) {
                 if (!inputPseudo.classList.contains('is-invalid'))

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PS Roulette</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link type="text/css" href="main.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="connection" class="modal">
+        <div class="modal-dialog">
+            <div class="modal-content" style="padding: 10px; display: flex; justify-content: center;">
+                <label for="pseudo">Pseudo</label>
+                <input type="text" id="pseudo">
+                <span id="pseudo-error" class="invalid-feedback" role="alert" style="display: none;">
+                    <strong>Votre pseudo doit faire plus de 3 caractères</strong>
+                </span>
+                <input type="button" id="validate" value="Valider" style="margin:15px auto 0 auto;">
+            </div>
+        </div>
+    </div>
+
+    <div id="container-sections" style="display: flex; width: 100%; top: 0; bottom: 0; position: absolute;">
+        <div id="section-video" style="background-color: black;">
+            <div style="position: fixed; left: 30px; top: 25px; width: 100px; height: 70px; z-index: 3; display: flex; justify-content:center;">
+                <input type="button" id="roulette" value="Roulette" style="width: 100%;">
+            </div>
+            <div id="host-div">
+                <video muted=true id="host-video" style="position: fixed; width: 15%; z-index: 2;"></video>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <video id="remote-video" class="embed-responsive-item" style="position: fixed; left: 0; top: 0; z-index: 1;"></video>
+            </div>
+        </div>
+        <div id="section-chat" style="background-color: white;">
+            <div id="chat" style="width:100%; font:16px/26px Georgia, Garamond, Serif;overflow-y: auto;overflow-x: hidden; padding: 10px 0;"></div>
+            <div id="container-message" style="bottom: 0; position: absolute; display: flex; justify-content:center;">
+                <div id="msg-box" style="margin: auto; display: flex;">
+                    <textarea name="message" id="message" style="resize: none; width: 100%; margin-right:15px;"></textarea>
+                    <a id="send" style="display: flex;"><i id="send-plane" class="fa fa-paper-plane" aria-hidden="true" style="color: #254395; cursor: pointer; margin:auto;"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let channel = 0;
+    </script>
+    <script src=" bundle.js "></script>
+</body>
+
+</html>

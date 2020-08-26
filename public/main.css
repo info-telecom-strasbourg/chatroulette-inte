@@ -20,25 +20,38 @@
     bottom: 0;
 }
 
+#chat {
+    height: 85%;
+}
+
 #container-message {
     width: 30%;
-    flex-direction: column;
-    height: 20%;
+    height: 15%;
+    padding: 10px 0;
 }
 
 #msg-box {
     width: 90%;
+    height: 70%;
 }
 
-#btn-box {
-    width: 90%;
+#send-plane {
+    font-size: 2.5em;
 }
 
-#chat {
-    height: 80%;
+@media (max-width: 1200px) {
+    #send-plane {
+        font-size: 1.7em;
+    }
 }
 
 @media (max-width: 900px) {
+    #send-plane {
+        font-size: 1em;
+    }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
     #container-sections {
         flex-direction: column;
     }
@@ -115,7 +128,7 @@
     display: none;
 }
 
-.button-send {
+#validate {
     width: 60%;
     height: 35px;
     margin-top: 10px;

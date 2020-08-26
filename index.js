@@ -17,8 +17,14 @@ app.use(express.static(__dirname + "/public/"))
 /*                                Routes                                     */
 /*****************************************************************************/
 
-app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname + '/client/index.html'));
+// 1A
+app.get("/libellule", (req, res) => {
+    res.sendFile(path.join(__dirname + '/client/index0.html'));
+});
+
+// 2A et 3A
+app.get("/papillon", (req, res) => {
+    res.sendFile(path.join(__dirname + '/client/index1.html'));
 });
 
 
@@ -31,6 +37,7 @@ var queue = [
     []
 ];
 
+var waitingQueue = [];
 
 /**
  * Initialise un socket et le met dans la file d'attente
@@ -57,21 +64,51 @@ function joinQueue(socket, channel) {
     console.log(queue[0].length);
     console.log('Number of 2A-3A: ');
     console.log(queue[1].length);
+    console.log('Number of 2A-3A in waiting queue: ');
+    console.log(waitingQueue.length);
+}
+
+function connectSockets(withAttente) {
+
+    let pair = { s1: null, s2: null };
+    if (withAttente) {
+        pair.s1 = queue[0].shift();
+        pair.s2 = waitingQueue.shift();
+    } else {
+        pair.s1 = queue[0].shift();
+        pair.s2 = queue[1].shift();
+    }
+
+    pair.s1.pairedSocket = pair.s2;
+    pair.s2.pairedSocket = pair.s1;
+
+    pair.s2.emit("peer.init");
+
+    console.log("---------------");
+    console.log("## Creating P2P connection ##");
 }
 
 function updateQueue() {
-    if (queue[1].length > 0 && queue[0].length > 0) {
-        let pair = {
-            s1: queue[0].shift(),
-            s2: queue[1].shift()
+    if (queue[0].length > 0 && waitingQueue.length > 0) {
+        if (queue[0][0].pairedSocket == waitingQueue[0]) {
+            if (queue[1].length > 0) {
+                connectSockets(false);
+            }
+        } else {
+            connectSockets(true);
         }
-        pair.s1.pairedSocket = pair.s2;
-        pair.s2.pairedSocket = pair.s1;
-
-        pair.s2.emit("peer.init");
-
-        console.log("---------------");
-        console.log("## Creating P2P connection ##")
+    } else {
+        if (queue[1].length > 0 && queue[0].length > 0) {
+            if (queue[1][0].pairedSocket == queue[0][0]) {
+                let ancienPeer = queue[1].shift();
+                waitingQueue.push(ancienPeer);
+                setTimeout(() => {
+                    updateQueue();
+                }, 30000);
+            } else {
+                connectSockets(false);
+            }
+        }
     }
 }
 
@@ -105,16 +142,20 @@ function disconnect() {
     let isInQueue1 = queue[1].indexOf(this);
 
     if (isInQueue1 != -1)
-        queue[1].splice(queue[1].indexOf(this), 1);
+        queue[1].splice(isInQueue1, 1);
     else {
         let isInQueue2 = queue[0].indexOf(this);
         if (isInQueue2 != -1)
-            queue[0].splice(queue[0].indexOf(this), 1);
+            queue[0].splice(isInQueue2, 1);
         else {
-            if (this.pairedSocket) {
-                this.pairedSocket.emit("peer.destroy");
+            let isInAttente = waitingQueue.indexOf(this);
+            if (isInAttente != 1) {
+                waitingQueue.splice(isInAttente, 1);
             }
         }
+    }
+    if (this.pairedSocket) {
+        this.pairedSocket.emit("peer.destroy");
     }
 }
 
