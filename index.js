@@ -39,10 +39,16 @@ var queue = [
 
 var waitingQueue = [];
 
+var socketList = [];
+
+var connectedTo = [];
+
 /**
  * Initialise un socket et le met dans la file d'attente
  */
 function login(channel) {
+    socketList.push(this);
+    connectedTo.push([]);
     joinQueue(this, channel);
 }
 
@@ -69,7 +75,6 @@ function joinQueue(socket, channel) {
 }
 
 function connectSockets(withAttente) {
-
     let pair = { s1: null, s2: null };
     if (withAttente) {
         pair.s1 = queue[0].shift();
@@ -81,6 +86,19 @@ function connectSockets(withAttente) {
 
     pair.s1.pairedSocket = pair.s2;
     pair.s2.pairedSocket = pair.s1;
+    
+    if (!connectedTo[socketList.indexOf(pair.s1)].includes(pair.s2)) {
+        connectedTo[socketList.indexOf(pair.s1)].push(pair.s2);
+    }
+    if (!connectedTo[socketList.indexOf(pair.s2)].includes(pair.s1)) {
+        connectedTo[socketList.indexOf(pair.s2)].push(pair.s1);
+    }
+    console.log('-----socket list length and connectedTo-----');
+    console.log(socketList.length);
+    console.log(connectedTo.length);
+    console.log('-----socket list length for both thing-----');
+    console.log(connectedTo[socketList.indexOf(pair.s2)].length);
+    console.log(connectedTo[socketList.indexOf(pair.s1)].length);
 
     pair.s2.emit("peer.init");
 
@@ -100,6 +118,7 @@ function updateQueue() {
     } else {
         if (queue[1].length > 0 && queue[0].length > 0) {
             if (queue[1][0].pairedSocket == queue[0][0]) {
+                queue[0][0].pairedSocket = null;
                 let ancienPeer = queue[1].shift();
                 waitingQueue.push(ancienPeer);
                 setTimeout(() => {
