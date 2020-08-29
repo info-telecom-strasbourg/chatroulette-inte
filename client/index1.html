@@ -4,6 +4,7 @@
 <head>
     <title>PS Roulette</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link type="text/css" href="main.css" rel="stylesheet">
@@ -37,10 +38,12 @@
         </div>
         <div id="section-chat" style="background-color: white;">
             <div id="chat" style="width:100%; font:16px/26px Georgia, Garamond, Serif;overflow-y: auto;overflow-x: hidden; padding: 10px 0;"></div>
+            <div id="emojis_keyboard"></div>
             <div id="container-message" style="bottom: 0; position: absolute; display: flex; justify-content:center;">
                 <div id="msg-box" style="margin: auto; display: flex;">
-                    <textarea name="message" id="message" style="resize: none; width: 100%; margin-right:15px;"></textarea>
-                    <a id="send" style="display: flex;"><i id="send-plane" class="fa fa-paper-plane" aria-hidden="true" style="color: #254395; cursor: pointer; margin:auto;"></i></a>
+                    <a id="emojis" style="display: flex;"><i class="fa fa fa-smile-o button-msg" aria-hidden="true" style="color: #254395; cursor: pointer; margin:auto;"></i></a>
+                    <textarea name="message" id="message" style="resize: none; width: 100%; margin:0 15px; font-family: 'Segoe UI Symbol'" ;></textarea>
+                    <a id="send" style="display: flex;"><i class="fa fa-paper-plane button-msg" aria-hidden="true" style="color: #254395; cursor: pointer; margin:auto;"></i></a>
                 </div>
             </div>
         </div>
@@ -49,6 +52,7 @@
     <script>
         let channel = 1;
     </script>
+
     <script src=" bundle.js "></script>
 </body>
 

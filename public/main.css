@@ -1,3 +1,9 @@
+#host-video {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+    -moz-transform: rotateY(180deg);
+}
+
 #connection {
     display: block;
 }
@@ -35,19 +41,19 @@
     height: 70%;
 }
 
-#send-plane {
+.button-msg {
     font-size: 2.5em;
 }
 
 @media (max-width: 1200px) {
-    #send-plane {
+    .button-msg {
         font-size: 1.7em;
     }
 }
 
 @media (max-width: 900px) {
-    #send-plane {
-        font-size: 1em;
+    .button-msg {
+        font-size: 1.4em;
     }
 }
 
@@ -75,14 +81,13 @@
         top: 0;
     }
     #container-message {
-        width: 95%;
+        width: 100%;
         flex-direction: row;
         height: auto;
-        margin-left: 5%;
         margin-bottom: 10px;
     }
     #msg-box {
-        width: 80%;
+        width: 90%;
     }
     #btn-box {
         width: 20%;
@@ -102,6 +107,11 @@
 
 .msg-content {
     font-size: 1rem;
+}
+
+.msg-content-just-emoji {
+    font-size: 2rem;
+    margin-top: 10px;
 }
 
 .message {
@@ -135,5 +145,22 @@
     border-radius: 50px;
     background-color: #254395;
     color: white;
+    border: none;
+}
+
+#emojis_keyboard {
+    display: none;
+    font-size: 1.5em;
+    position: absolute;
+    bottom: 15%;
+    padding: 0 30px;
+    background-color: rgb(49, 146, 232, 0.7);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.emoji_icon {
+    font-family: "Segoe UI Symbol";
+    background: none;
     border: none;
 }

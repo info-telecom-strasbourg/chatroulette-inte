@@ -86,7 +86,7 @@ function connectSockets(withAttente) {
 
     pair.s1.pairedSocket = pair.s2;
     pair.s2.pairedSocket = pair.s1;
-    
+
     if (!connectedTo[socketList.indexOf(pair.s1)].includes(pair.s2)) {
         connectedTo[socketList.indexOf(pair.s1)].push(pair.s2);
     }
@@ -118,7 +118,6 @@ function updateQueue() {
     } else {
         if (queue[1].length > 0 && queue[0].length > 0) {
             if (queue[1][0].pairedSocket == queue[0][0]) {
-                queue[0][0].pairedSocket = null;
                 let ancienPeer = queue[1].shift();
                 waitingQueue.push(ancienPeer);
                 setTimeout(() => {

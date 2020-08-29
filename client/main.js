@@ -6,6 +6,7 @@ let hostVideo = document.querySelector('#host-video');
 let remoteVideo = document.querySelector('#remote-video');
 
 let info = true;
+let timeBetween2Msg = 700;
 
 
 
@@ -24,6 +25,21 @@ var myPseudo;
 let couleursPseudo = ["#B814A2", "#b331e8", "#142ab8", "#31a8e8", "#31e89d", "#31e834", "#206d19", "#dcd626", "#dc7e26", "#dc2626"];
 let myPseudoColor;
 let peerPseudoColor;
+
+let emojis = ["🤣", "🙂", "😄", "😉", "😘", "😜", "🤔", "🙈", "👌", "👍", "😆", "😮", "😭", "😱", "😮", "🙁", "😑", "😎", "😝", "😇", "🤩", "❤️", "😍", "💀"];
+
+function htmlEntities(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+for (let i = 0; i < emojis.length; i++) {
+    var messageBlock = "";
+    messageBlock += '<button class="emoji_icon">';
+    messageBlock += emojis[i];
+    messageBlock += '</button>';
+    document.getElementById("emojis_keyboard").innerHTML += messageBlock;
+}
+
 
 
 DEBUG = true;
@@ -64,13 +80,15 @@ function addEmojies(str) {
         .replace(/(^x\(|^X\(|\sx\(|\sX\(|:skull:)/g, ' 💀 ');
 }
 
-
-
-function htmlEntities(str) {
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function remEmojis(str) {
+    return String(str).replace(/(🤣|🙂|😄|😉|😘|😜|🤔|🙈|👌|👍|😆|😮|😭|😱|😮|🙁|😑|😎|😝|😇|🤩|❤️|😍|💀)/g, '');
 }
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+document.getElementById('message').addEventListener("input", function() {
+    this.value = addEmojies(this.value);
+});
+
+navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
         hostVideo.srcObject = stream;
         hostVideo.play();
@@ -97,6 +115,13 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                 document.getElementById('message').value += "\n";
         });
 
+        document.getElementById('pseudo').addEventListener('keydown', function(e) {
+            if (!e.ctrlKey && e.keyCode === 13) {
+                e.preventDefault();
+                validateLogin();
+            }
+        });
+
         // Add a listener to validate the username
         document.getElementById('validate').onclick = validateLogin;
 
@@ -106,7 +131,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
         function validateLogin() {
             var inputPseudo = document.getElementById('pseudo');
             var pseudoError = document.getElementById('pseudo-error');
-            myPseudo = addEmojies(htmlEntities(inputPseudo.value));
+            myPseudo = nl2br(addEmojies(htmlEntities(inputPseudo.value)));
 
             if (myPseudo.length < 3) {
                 if (!inputPseudo.classList.contains('is-invalid'))
@@ -131,6 +156,15 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             socket.emit('reroll');
         }
 
+        /**
+         * Check if the message is just an emoji
+         */
+        function isJustAnEmoji(message) {
+            message = remEmojis(message);
+            message = message.replace(/(\s|<br>)/g, '');
+            return (message == "");
+        }
+
         // Add a listener to send a message in the chat
         document.getElementById('send').onclick = sendMessage;
 
@@ -138,7 +172,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
          * Send the message in the chat.
          */
         function sendMessage() {
-            if (client.connected && !info && (Date.now() - lastSendingTime) > 1000) {
+            if (client.connected && !info && (Date.now() - lastSendingTime) > timeBetween2Msg) {
                 lastSendingTime = Date.now();
                 var inputMsg = document.getElementById('message');
                 var message = nl2br(addEmojies(htmlEntities(inputMsg.value)));
@@ -149,7 +183,10 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                     messageBlock += '   <div class="username" style="color:' + couleursPseudo[myPseudoColor] + '">';
                     messageBlock += myPseudo;
                     messageBlock += '</div>';
-                    messageBlock += '   <div class="msg-content">';
+                    messageBlock += '   <div class="msg-content';
+                    if (isJustAnEmoji(message))
+                        messageBlock += '-just-emoji';
+                    messageBlock += '">';
                     messageBlock += message;
                     messageBlock += '   </div>';
                     messageBlock += '</div>';
@@ -159,6 +196,38 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                 }
             }
         }
+
+        // Add a listener to display emojis
+        document.getElementById('emojis').onclick = displayEmojis;
+
+        /**
+         * Display emojis
+         */
+        function displayEmojis() {
+            if (document.getElementById('emojis_keyboard').style.display == "flex")
+                document.getElementById('emojis_keyboard').style.display = "none";
+            else
+                document.getElementById('emojis_keyboard').style.display = "flex";
+        }
+
+
+
+        // Add a listener to add an emoji in the textarea
+        for (let i = 0; i < document.getElementsByClassName('emoji_icon').length; i++) {
+            document.getElementsByClassName('emoji_icon')[i].onclick = function() {
+                addAnEmoji(document.getElementsByClassName('emoji_icon')[i].innerHTML);
+            }
+        }
+
+        /**
+         * Add an emoji in the textarea
+         */
+        function addAnEmoji(emoji) {
+            document.getElementById("message").value += emoji;
+            document.getElementById('message').focus();
+        }
+
+        document.getElementById('message').addEventListener('focus', function() { document.getElementById('emojis_keyboard').style.display = "none"; });
 
 
         /**
@@ -196,7 +265,10 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: false })
                     messageBlock += '   <div class="username" style="color:' + couleursPseudo[peerPseudoColor] + '">';
                     messageBlock += client.pseudo;
                     messageBlock += '</div>';
-                    messageBlock += '   <div class="msg-content">';
+                    messageBlock += '   <div class="msg-content';
+                    if (isJustAnEmoji(data))
+                        messageBlock += '-just-emoji';
+                    messageBlock += '">';
                     messageBlock += data;
                     messageBlock += '   </div>';
                     messageBlock += '</div>';
