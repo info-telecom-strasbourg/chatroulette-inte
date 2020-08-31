@@ -1,41 +1,53 @@
-const express = require('express');
+var prod = process.env.NODE_ENV === "prod";
+
+const express = require("express");
 const app = express();
 const path = require("path");
-const http = require('http');
+const http = require(prod ? "https" : "http");
 
+var fs = require("fs");
 
-var fs = require('fs');
+var config = {};
 
-const server = http.createServer({}, app);
+if (prod) {
+    config = {
+        key: fs.readFileSync(process.env.SSL_KEY),
+        cert: fs.readFileSync(process.env.SSL_CERT),
+        requestCert: false,
+        rejectUnauthorized: false,
+        secure: true,
+    };
+}
 
-const io = require('socket.io')(server);
+const server = http.createServer(config, app);
+
+const io = require("socket.io")(server);
 const port = process.env.PORT || 3000;
-const routeName = "/index";
-app.use(express.static(__dirname + "/public/"))
+
+app.use(express.static(__dirname + "/public/"));
+
+const route1 = process.env.ROUTE1 || "libellule";
+const route2 = process.env.ROUTE2 || "papillon";
 
 /*****************************************************************************/
 /*                                Routes                                     */
 /*****************************************************************************/
 
 // 1A
-app.get("/libellule", (req, res) => {
-    res.sendFile(path.join(__dirname + '/client/index0.html'));
+app.get(route1, (req, res) => {
+    res.sendFile(path.join(__dirname + "/client/index0.html"));
 });
 
 // 2A et 3A
-app.get("/papillon", (req, res) => {
-    res.sendFile(path.join(__dirname + '/client/index1.html'));
+app.get(route2, (req, res) => {
+    res.sendFile(path.join(__dirname + "/client/index1.html"));
 });
-
 
 /*****************************************************************************/
 /*                               Logique                                     */
 /*****************************************************************************/
 
-var queue = [
-    [],
-    []
-];
+var queue = [[], []];
 
 var waitingQueue = [];
 
@@ -54,7 +66,7 @@ function login(channel) {
 
 /**
  * Met dans la file d'attente le socket
- * @param socket 
+ * @param socket
  */
 function joinQueue(socket, channel) {
     if (channel < 0 || channel > 1) return;
@@ -66,11 +78,11 @@ function joinQueue(socket, channel) {
 
     console.log("---------------");
     console.log("## Login ##");
-    console.log('Number of 1A: ');
+    console.log("Number of 1A: ");
     console.log(queue[0].length);
-    console.log('Number of 2A-3A: ');
+    console.log("Number of 2A-3A: ");
     console.log(queue[1].length);
-    console.log('Number of 2A-3A in waiting queue: ');
+    console.log("Number of 2A-3A in waiting queue: ");
     console.log(waitingQueue.length);
 }
 
@@ -93,10 +105,10 @@ function connectSockets(withAttente) {
     if (!connectedTo[socketList.indexOf(pair.s2)].includes(pair.s1)) {
         connectedTo[socketList.indexOf(pair.s2)].push(pair.s1);
     }
-    console.log('-----socket list length and connectedTo-----');
+    console.log("-----socket list length and connectedTo-----");
     console.log(socketList.length);
     console.log(connectedTo.length);
-    console.log('-----socket list length for both thing-----');
+    console.log("-----socket list length for both thing-----");
     console.log(connectedTo[socketList.indexOf(pair.s2)].length);
     console.log(connectedTo[socketList.indexOf(pair.s1)].length);
 
@@ -131,9 +143,9 @@ function updateQueue() {
 }
 
 /**
- * Arrete la conversation entre deux client et 
+ * Arrete la conversation entre deux client et
  * les remet dans la file d'attente
- * @param socket 
+ * @param socket
  */
 function rejoinQueue(channel) {
     joinQueue(this, channel);
@@ -143,7 +155,7 @@ function rejoinQueue(channel) {
  * Transmet l'offre au socket appairé
  */
 function sendOffer(data) {
-    this.pairedSocket.emit('offer.receive', data);
+    this.pairedSocket.emit("offer.receive", data);
 }
 
 /**
@@ -159,12 +171,10 @@ function sendAnswer(data) {
 function disconnect() {
     let isInQueue1 = queue[1].indexOf(this);
 
-    if (isInQueue1 != -1)
-        queue[1].splice(isInQueue1, 1);
+    if (isInQueue1 != -1) queue[1].splice(isInQueue1, 1);
     else {
         let isInQueue2 = queue[0].indexOf(this);
-        if (isInQueue2 != -1)
-            queue[0].splice(isInQueue2, 1);
+        if (isInQueue2 != -1) queue[0].splice(isInQueue2, 1);
         else {
             let isInAttente = waitingQueue.indexOf(this);
             if (isInAttente != 1) {
@@ -182,7 +192,7 @@ function reroll() {
     this.emit("peer.destroy");
 }
 
-io.on('connection', function(socket) {
+io.on("connection", function (socket) {
     socket.on("login", login);
     socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);
@@ -190,6 +200,5 @@ io.on('connection', function(socket) {
     socket.on("reroll", reroll);
     socket.on("disconnect", disconnect);
 });
-
 
 server.listen(port, () => console.log(`Active on port ${port}`));
