@@ -29,8 +29,8 @@ const port = process.env.PORT || 3000;
 app.use(express.static(__dirname + "/public/"));
 app.use(sslRedirect.default());
 
-const route1 = process.env.ROUTE1 || "libellule";
-const route2 = process.env.ROUTE2 || "papillon";
+const route1 = process.env.ROUTE1 || "/libellule";
+const route2 = process.env.ROUTE2 || "/papillon";
 
 /*****************************************************************************/
 /*                                Routes                                     */

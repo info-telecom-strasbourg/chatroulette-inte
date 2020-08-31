@@ -1,10 +1,10 @@
 {
   "name": "psroulette",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.mjs",
   "license": "GPLV3",
   "scripts": {
-    "start": "node index.js",
+    "start": "node index.mjs",
     "watch": "npx watchify ./client/main.js -o ./public/bundle.js",
     "build": "npx browserify ./client/main.js -o ./public/bundle.js"
   },
