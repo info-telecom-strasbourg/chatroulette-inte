@@ -1,19 +1,21 @@
-var prod = process.env.NODE_ENV === "prod";
+import express from "express";
+import path from "path";
+import http from "http";
+import sslRedirect from "heroku-ssl-redirect";
+import fs from "fs";
+import socketio from "socket.io";
+import expose from './expose.js';
+const { __dirname } = expose;
 
-const express = require("express");
 const app = express();
-const path = require("path");
-const http = require(prod ? "https" : "http");
-
-var fs = require("fs");
 
 var config = {};
 
-if (prod) {
+if (process.env.NODE_ENV === "production") {
     config = {
         key: fs.readFileSync(process.env.SSL_KEY),
         cert: fs.readFileSync(process.env.SSL_CERT),
-        requestCert: false,
+        requestCert: true,
         rejectUnauthorized: false,
         secure: true,
     };
@@ -21,10 +23,11 @@ if (prod) {
 
 const server = http.createServer(config, app);
 
-const io = require("socket.io")(server);
+const io = socketio(server);
 const port = process.env.PORT || 3000;
 
 app.use(express.static(__dirname + "/public/"));
+app.use(sslRedirect.default());
 
 const route1 = process.env.ROUTE1 || "libellule";
 const route2 = process.env.ROUTE2 || "papillon";
