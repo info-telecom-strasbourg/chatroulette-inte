@@ -29,8 +29,8 @@ const port = process.env.PORT || 3000;
 app.use(express.static(__dirname + "/public/"));
 app.use(sslRedirect.default());
 
-const route1 = process.env.ROUTE1 || "/libellule";
-const route2 = process.env.ROUTE2 || "/papillon";
+const route1 = process.env.ROUTE1 || "/libellule2u54OMXJq8";
+const route2 = process.env.ROUTE2 || "/papillonzUUrkgmuBC";
 
 /*****************************************************************************/
 /*                                Routes                                     */
@@ -51,8 +51,6 @@ app.get(route2, (req, res) => {
 /*****************************************************************************/
 
 var queue = [[], []];
-
-var waitingQueue = [];
 
 var socketList = [];
 
@@ -89,14 +87,12 @@ function joinQueue(socket, channel) {
     console.log(waitingQueue.length);
 }
 
-function connectSockets(withAttente) {
-    let pair = { s1: null, s2: null };
-    if (withAttente) {
-        pair.s1 = queue[0].shift();
-        pair.s2 = waitingQueue.shift();
-    } else {
-        pair.s1 = queue[0].shift();
-        pair.s2 = queue[1].shift();
+function connectSockets(ind, ind2) {
+    console.log(ind);
+    console.log(ind2);
+    let pair = {
+        s1: queue[0].splice(ind, 1)[0],
+        s2: queue[1].splice(ind2, 1)[0]
     }
 
     pair.s1.pairedSocket = pair.s2;
@@ -116,33 +112,21 @@ function connectSockets(withAttente) {
     console.log(connectedTo[socketList.indexOf(pair.s1)].length);
 
     pair.s2.emit("peer.init");
+}
 
-    console.log("---------------");
-    console.log("## Creating P2P connection ##");
+function isInHist(elt, hist) {
+    return hist.includes(elt);
 }
 
 function updateQueue() {
-    if (queue[0].length > 0 && waitingQueue.length > 0) {
-        if (queue[0][0].pairedSocket == waitingQueue[0]) {
-            if (queue[1].length > 0) {
-                connectSockets(false);
+    for (let i = 0; i < queue[0].length; i++)
+        for (let j = 0; j < queue[1].length; j++)
+            if (!isInHist(queue[0][i], connectedTo[socketList.indexOf(queue[1][j])]))
+            {
+                connectSockets(i, j);
+                updateQueue();
+                return;
             }
-        } else {
-            connectSockets(true);
-        }
-    } else {
-        if (queue[1].length > 0 && queue[0].length > 0) {
-            if (queue[1][0].pairedSocket == queue[0][0]) {
-                let ancienPeer = queue[1].shift();
-                waitingQueue.push(ancienPeer);
-                setTimeout(() => {
-                    updateQueue();
-                }, 30000);
-            } else {
-                connectSockets(false);
-            }
-        }
-    }
 }
 
 /**
@@ -177,17 +161,15 @@ function disconnect() {
     if (isInQueue1 != -1) queue[1].splice(isInQueue1, 1);
     else {
         let isInQueue2 = queue[0].indexOf(this);
-        if (isInQueue2 != -1) queue[0].splice(isInQueue2, 1);
-        else {
-            let isInAttente = waitingQueue.indexOf(this);
-            if (isInAttente != 1) {
-                waitingQueue.splice(isInAttente, 1);
-            }
-        }
+        if (isInQueue2 != -1)
+            queue[0].splice(isInQueue2, 1);
     }
     if (this.pairedSocket) {
         this.pairedSocket.emit("peer.destroy");
     }
+    var indSocket = socketList.indexOf(this);
+    socketList.splice(indSocket, 1);
+    connectedTo.splice(indSocket, 1);
 }
 
 function reroll() {
