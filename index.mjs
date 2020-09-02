@@ -50,7 +50,10 @@ app.get(route2, (req, res) => {
 /*                               Logique                                     */
 /*****************************************************************************/
 
-var queue = [[], []];
+var queue = [
+    [],
+    []
+];
 
 var socketList = [];
 
@@ -83,8 +86,12 @@ function joinQueue(socket, channel) {
     console.log(queue[0].length);
     console.log("Number of 2A-3A: ");
     console.log(queue[1].length);
-    console.log("Number of 2A-3A in waiting queue: ");
-    console.log(waitingQueue.length);
+    console.log("Connections: ");
+    console.log(connectedTo.length);
+    for (let i = 0; i < connectedTo.length; i++)
+        console.log("User" + i + " : " + connectedTo[i].length);
+    console.log("Socket list: ");
+    console.log(socketList.length);
 }
 
 function connectSockets(ind, ind2) {
@@ -121,8 +128,7 @@ function isInHist(elt, hist) {
 function updateQueue() {
     for (let i = 0; i < queue[0].length; i++)
         for (let j = 0; j < queue[1].length; j++)
-            if (!isInHist(queue[0][i], connectedTo[socketList.indexOf(queue[1][j])]))
-            {
+            if (!isInHist(queue[0][i], connectedTo[socketList.indexOf(queue[1][j])])) {
                 connectSockets(i, j);
                 updateQueue();
                 return;
@@ -177,7 +183,7 @@ function reroll() {
     this.emit("peer.destroy");
 }
 
-io.on("connection", function (socket) {
+io.on("connection", function(socket) {
     socket.on("login", login);
     socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);
