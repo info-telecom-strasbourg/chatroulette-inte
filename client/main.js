@@ -88,7 +88,7 @@ document.getElementById('message').addEventListener("input", function() {
     this.value = addEmojies(this.value);
 });
 
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+navigator.mediaDevices.getUserMedia({ video: true, audio: false })
     .then(stream => {
         hostVideo.srcObject = stream;
         hostVideo.play();
