@@ -253,7 +253,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                     divChat.innerHTML = "";
                     var messageBlock = "";
                     messageBlock += '<div class="info">';
-                    messageBlock += '   En connection avec ' + data;
+                    messageBlock += '   En connexion avec ' + data;
                     messageBlock += '</div>';
                     divChat.innerHTML += messageBlock;
                     client.pseudo = data;
@@ -281,7 +281,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         }
 
         /**
-         * Appelée si ce client doit être l'initiateur de la connection
+         * Appelée si ce client doit être l'initiateur de la connexion
          */
         function initiatePeer() {
             debug("Init peer");
