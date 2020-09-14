@@ -1,4 +1,4 @@
-New let Peer = require("simple-peer");
+let Peer = require("simple-peer");
 let io = require("socket.io-client");
 let socket = io();
 
