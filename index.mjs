@@ -4,7 +4,7 @@ import http from "http";
 import sslRedirect from "heroku-ssl-redirect";
 import fs from "fs";
 import socketio from "socket.io";
-import expose from './expose.js';
+import expose from "./expose.js";
 const { __dirname } = expose;
 
 const app = express();
@@ -29,8 +29,12 @@ const port = process.env.PORT || 3000;
 app.use(express.static(__dirname + "/public/"));
 app.use(sslRedirect.default());
 
-const route1 = process.env.ROUTE1 || "/libellule2u54OMXJq8";
-const route2 = process.env.ROUTE2 || "/papillonzUUrkgmuBC";
+const route1 = process.env.ROUTE1 || "/libellule";
+const route2 = process.env.ROUTE2 || "/papillon";
+const max_score = process.env.MAX_SCORE || 100;
+const score_step = process.env.SCORE_STEP || 2;
+const max_hist = process.env.MAX_HIST || 5;
+const update_freq = process.env.UPDATE_FREQ || 2000;
 
 /*****************************************************************************/
 /*                                Routes                                     */
@@ -50,21 +54,16 @@ app.get(route2, (req, res) => {
 /*                               Logique                                     */
 /*****************************************************************************/
 
-var queue = [
-    [],
-    []
-];
-
-var socketList = [];
-
-var connectedTo = [];
+var queue = [[], []];
 
 /**
  * Initialise un socket et le met dans la file d'attente
  */
 function login(channel) {
-    socketList.push(this);
-    connectedTo.push([]);
+    this.history = [];
+    this.score = 0;
+    this.auth = true;
+
     joinQueue(this, channel);
 }
 
@@ -77,62 +76,51 @@ function joinQueue(socket, channel) {
 
     socket.channelId = channel;
     queue[channel].push(socket);
-
-    updateQueue();
-
-    console.log("---------------");
-    console.log("## Login ##");
-    console.log("Number of 1A: ");
-    console.log(queue[0].length);
-    console.log("Number of 2A-3A: ");
-    console.log(queue[1].length);
-    console.log("Connections: ");
-    console.log(connectedTo.length);
-    for (let i = 0; i < connectedTo.length; i++)
-        console.log("User" + i + " : " + connectedTo[i].length);
-    console.log("Socket list: ");
-    console.log(socketList.length);
 }
 
 function connectSockets(ind, ind2) {
-    console.log(ind);
-    console.log(ind2);
     let pair = {
         s1: queue[0].splice(ind, 1)[0],
-        s2: queue[1].splice(ind2, 1)[0]
-    }
+        s2: queue[1].splice(ind2, 1)[0],
+    };
 
     pair.s1.pairedSocket = pair.s2;
     pair.s2.pairedSocket = pair.s1;
 
-    if (!connectedTo[socketList.indexOf(pair.s1)].includes(pair.s2)) {
-        connectedTo[socketList.indexOf(pair.s1)].push(pair.s2);
+    pair.s1.score = 0;
+    pair.s2.score = 0;
+
+    pair.s1.history.unshift(pair.s2.id);
+    if (pair.s1.history.length > max_hist) {
+        pair.s1.history.pop();
     }
-    if (!connectedTo[socketList.indexOf(pair.s2)].includes(pair.s1)) {
-        connectedTo[socketList.indexOf(pair.s2)].push(pair.s1);
-    }
-    console.log("-----socket list length and connectedTo-----");
-    console.log(socketList.length);
-    console.log(connectedTo.length);
-    console.log("-----socket list length for both thing-----");
-    console.log(connectedTo[socketList.indexOf(pair.s2)].length);
-    console.log(connectedTo[socketList.indexOf(pair.s1)].length);
 
     pair.s2.emit("peer.init");
 }
 
-function isInHist(elt, hist) {
-    return hist.includes(elt);
-}
-
 function updateQueue() {
-    for (let i = 0; i < queue[0].length; i++)
-        for (let j = 0; j < queue[1].length; j++)
-            if (!isInHist(queue[0][i], connectedTo[socketList.indexOf(queue[1][j])])) {
+    console.log("---------------");
+    console.log(
+        "Queue update : 1A (" +
+            queue[0].length +
+            ") / 2A (" +
+            queue[1].length +
+            ")"
+    );
+
+    for (let i = 0; i < queue[0].length; i++) {
+        for (let j = 0; j < queue[1].length; j++) {
+            if (!queue[0][i].history.includes(queue[1][j].id)) {
                 connectSockets(i, j);
-                updateQueue();
                 return;
             }
+        }
+
+        queue[0][i].score += score_step;
+        if (queue[0][i].score > max_score) {
+            queue[0][i].history = [];
+        }
+    }
 }
 
 /**
@@ -162,20 +150,14 @@ function sendAnswer(data) {
  * Appelée quand un socket se déconnecte
  */
 function disconnect() {
-    let isInQueue1 = queue[1].indexOf(this);
+    if (!this.auth) return;
+    let isInQueue = queue[this.channelId].indexOf(this);
 
-    if (isInQueue1 != -1) queue[1].splice(isInQueue1, 1);
-    else {
-        let isInQueue2 = queue[0].indexOf(this);
-        if (isInQueue2 != -1)
-            queue[0].splice(isInQueue2, 1);
-    }
+    if (isInQueue != -1) queue[this.channelId].splice(isInQueue, 1);
+
     if (this.pairedSocket) {
         this.pairedSocket.emit("peer.destroy");
     }
-    var indSocket = socketList.indexOf(this);
-    socketList.splice(indSocket, 1);
-    connectedTo.splice(indSocket, 1);
 }
 
 function reroll() {
@@ -183,7 +165,7 @@ function reroll() {
     this.emit("peer.destroy");
 }
 
-io.on("connection", function(socket) {
+io.on("connection", function (socket) {
     socket.on("login", login);
     socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);
@@ -191,5 +173,7 @@ io.on("connection", function(socket) {
     socket.on("reroll", reroll);
     socket.on("disconnect", disconnect);
 });
+
+setInterval(updateQueue, update_freq);
 
 server.listen(port, () => console.log(`Active on port ${port}`));
