@@ -76,9 +76,27 @@ function joinQueue(socket, channel) {
 
     socket.channelId = channel;
     queue[channel].push(socket);
+
+    console.log("---------------");
+    console.log(
+        "Queue update : 1A (" +
+            queue[0].length +
+            ") / 2A (" +
+            queue[1].length +
+            ")"
+    );
 }
 
 function connectSockets(ind, ind2) {
+    console.log("---------------");
+    console.log(
+        "Queue update : 1A (" +
+            queue[0].length +
+            ") / 2A (" +
+            queue[1].length +
+            ")"
+    );
+
     let pair = {
         s1: queue[0].splice(ind, 1)[0],
         s2: queue[1].splice(ind2, 1)[0],
@@ -99,15 +117,6 @@ function connectSockets(ind, ind2) {
 }
 
 function updateQueue() {
-    console.log("---------------");
-    console.log(
-        "Queue update : 1A (" +
-            queue[0].length +
-            ") / 2A (" +
-            queue[1].length +
-            ")"
-    );
-
     for (let i = 0; i < queue[0].length; i++) {
         for (let j = 0; j < queue[1].length; j++) {
             if (!queue[0][i].history.includes(queue[1][j].id)) {
@@ -161,8 +170,10 @@ function disconnect() {
 }
 
 function reroll() {
-    this.pairedSocket.emit("peer.destroy");
-    this.emit("peer.destroy");
+    if (this.pairedSocket) {
+        this.pairedSocket.emit("peer.destroy");
+        this.emit("peer.destroy");
+    }
 }
 
 io.on("connection", function (socket) {
@@ -173,6 +184,19 @@ io.on("connection", function (socket) {
     socket.on("reroll", reroll);
     socket.on("disconnect", disconnect);
 });
+
+function send_queue_len() {
+    let len = [queue[0].length, queue[1].length];
+    for (let i = 0; i < queue[0].length; i++) {
+        queue[0][i].emit("queue.update", len);
+    }
+
+    for (let i = 0; i < queue[1].length; i++) {
+        queue[1][i].emit("queue.update", len);
+    }
+}
+
+setInterval(send_queue_len, 5000);
 
 setInterval(updateQueue, update_freq);
 

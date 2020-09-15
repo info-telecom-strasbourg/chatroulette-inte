@@ -449,6 +449,19 @@ navigator.mediaDevices
         socket.on("offer.receive", receiveOffer);
         socket.on("answer.receive", signalAnswer);
         socket.on("peer.destroy", destroyPeer);
+
+        socket.on("queue.update", (len) => {
+            var divChat = document.getElementById("chat");
+            divChat.innerHTML = "";
+            var messageBlock = "";
+            messageBlock += '<div class="info">';
+            messageBlock += "   File d'attente : <br>";
+            messageBlock += len[0] + " 1A <br>";
+            messageBlock += len[1] + " animaux <br>";
+            messageBlock += "</div>";
+            divChat.innerHTML += messageBlock;
+            client.pseudo = data;
+        });
     })
     .catch(function (err) {
         document.write(
