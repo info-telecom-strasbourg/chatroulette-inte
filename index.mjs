@@ -29,12 +29,15 @@ const port = process.env.PORT || 3000;
 app.use(express.static(__dirname + "/public/"));
 app.use(sslRedirect.default());
 
-const route1 = process.env.ROUTE1 || "/libellule";
+const route1 = process.env.ROUTE1 || "/";
 const route2 = process.env.ROUTE2 || "/papillon";
 const max_score = process.env.MAX_SCORE || 100;
 const score_step = process.env.SCORE_STEP || 2;
 const max_hist = process.env.MAX_HIST || 5;
 const update_freq = process.env.UPDATE_FREQ || 2000;
+const TARGET_0 = 0;
+const TARGET_1 = 1;
+const TARGET_BOTH = 2;
 
 /*****************************************************************************/
 /*                                Routes                                     */
@@ -43,11 +46,6 @@ const update_freq = process.env.UPDATE_FREQ || 2000;
 // 1A
 app.get(route1, (req, res) => {
     res.sendFile(path.join(__dirname + "/client/index0.html"));
-});
-
-// 2A et 3A
-app.get(route2, (req, res) => {
-    res.sendFile(path.join(__dirname + "/client/index1.html"));
 });
 
 /*****************************************************************************/
@@ -59,12 +57,31 @@ var queue = [[], []];
 /**
  * Initialise un socket et le met dans la file d'attente
  */
-function login(channel) {
+function login(target) {
     this.history = [];
     this.score = 0;
     this.auth = true;
+    this.target = target;
 
-    joinQueue(this, channel);
+    if (target === TARGET_BOTH || target == TARGET_0) {
+        joinQueue(this, 1);
+        shuffleQueue(0);
+    }
+
+    if (target === TARGET_BOTH || target == TARGET_1) {
+        joinQueue(this, 0);
+        shuffleQueue(1);
+    }
+}
+
+function shuffleQueue(chan) {
+    // On mélange la queue
+    for (let i = queue[chan].length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * i);
+        const temp = queue[chan][i];
+        queue[chan][i] = queue[chan][j];
+        queue[chan][j] = temp;
+    }
 }
 
 /**
@@ -77,7 +94,6 @@ function joinQueue(socket, channel) {
     socket.channelId = channel;
     queue[channel].push(socket);
 
-    console.log("---------------");
     console.log(
         "Queue update : 1A (" +
             queue[0].length +
@@ -85,22 +101,21 @@ function joinQueue(socket, channel) {
             queue[1].length +
             ")"
     );
+    send_queue_len();
 }
 
 function connectSockets(ind, ind2) {
-    console.log("---------------");
-    console.log(
-        "Queue update : 1A (" +
-            queue[0].length +
-            ") / 2A (" +
-            queue[1].length +
-            ")"
-    );
-
     let pair = {
         s1: queue[0].splice(ind, 1)[0],
         s2: queue[1].splice(ind2, 1)[0],
     };
+
+    if (pair.s1.target === TARGET_BOTH) {
+        queue[1].splice(queue[1].indexOf(pair.s1), 1);
+    }
+    if (pair.s2.target === TARGET_BOTH) {
+        queue[0].splice(queue[0].indexOf(pair.s2), 1);
+    }
 
     pair.s1.pairedSocket = pair.s2;
     pair.s2.pairedSocket = pair.s1;
@@ -113,15 +128,27 @@ function connectSockets(ind, ind2) {
         pair.s1.history.pop();
     }
 
+    console.log(
+        "Queue update : 1A (" +
+            queue[0].length +
+            ") / 2A (" +
+            queue[1].length +
+            ")"
+    );
+
     pair.s2.emit("peer.init");
+
+    send_queue_len();
 }
 
 function updateQueue() {
     for (let i = 0; i < queue[0].length; i++) {
         for (let j = 0; j < queue[1].length; j++) {
-            if (!queue[0][i].history.includes(queue[1][j].id)) {
-                connectSockets(i, j);
-                return;
+            if (queue[0][i].id !== queue[1][j].id) {
+                if (!queue[0][i].history.includes(queue[1][j].id)) {
+                    connectSockets(i, j);
+                    return;
+                }
             }
         }
 
@@ -137,8 +164,16 @@ function updateQueue() {
  * les remet dans la file d'attente
  * @param socket
  */
-function rejoinQueue(channel) {
-    joinQueue(this, channel);
+function rejoinQueue(socket) {
+    if (socket.target === TARGET_BOTH || socket.target == TARGET_0) {
+        joinQueue(socket, 1);
+        shuffleQueue(0);
+    }
+
+    if (socket.target === TARGET_BOTH || socket.target == TARGET_1) {
+        joinQueue(socket, 0);
+        shuffleQueue(1);
+    }
 }
 
 /**
@@ -166,19 +201,27 @@ function disconnect() {
 
     if (this.pairedSocket) {
         this.pairedSocket.emit("peer.destroy");
+        this.pairedSocket.pairedSocket = null;
     }
+
+    send_queue_len();
 }
 
 function reroll() {
     if (this.pairedSocket) {
         this.pairedSocket.emit("peer.destroy");
-        this.emit("peer.destroy");
+        this.pairedSocket.pairedSocket = null;
+        rejoinQueue(this.pairedSocket);
+        this.pairedSocket = null;
     }
+    this.emit("peer.destroy");
+    rejoinQueue(this);
+
+    send_queue_len();
 }
 
 io.on("connection", function (socket) {
     socket.on("login", login);
-    socket.on("queue.rejoin", rejoinQueue);
     socket.on("offer", sendOffer);
     socket.on("answer", sendAnswer);
     socket.on("reroll", reroll);
@@ -195,8 +238,6 @@ function send_queue_len() {
         queue[1][i].emit("queue.update", len);
     }
 }
-
-setInterval(send_queue_len, 5000);
 
 setInterval(updateQueue, update_freq);
 

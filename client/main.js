@@ -8,11 +8,16 @@ let remoteVideo = document.querySelector("#remote-video");
 let info = true;
 let timeBetween2Msg = 700;
 
+const TARGET_0 = 0;
+const TARGET_1 = 1;
+const TARGET_BOTH = 2;
+
 // Sert à stocker les variables globales
 var client = {
     connected: false,
     peer: null,
     pseudo: "",
+    queue: {},
 };
 
 var lastSendingTime = Date.now();
@@ -175,6 +180,11 @@ navigator.mediaDevices
             var inputPseudo = document.getElementById("pseudo");
             var pseudoError = document.getElementById("pseudo-error");
             myPseudo = nl2br(addEmojies(htmlEntities(inputPseudo.value)));
+            let chan0 = document.getElementById("chan0").checked;
+            let chan1 = document.getElementById("chan1").checked;
+
+            client.target =
+                chan0 && chan1 ? TARGET_BOTH : chan0 ? TARGET_0 : TARGET_1;
 
             if (myPseudo.length < 3) {
                 if (!inputPseudo.classList.contains("is-invalid"))
@@ -184,9 +194,7 @@ navigator.mediaDevices
             }
             document.getElementById("connection").style.display = "none";
 
-            socket.emit("login", channel);
-
-            msgSearch();
+            socket.emit("login", client.target);
         }
 
         // Add listener for roulette button
@@ -372,6 +380,8 @@ navigator.mediaDevices
                 }
             });
 
+            msgConnecting();
+
             client.peer = peer;
         }
 
@@ -390,6 +400,7 @@ navigator.mediaDevices
             peer.signal(offer);
             client.peer = peer;
             client.connected = true;
+            msgConnecting();
         }
 
         /**
@@ -418,12 +429,12 @@ navigator.mediaDevices
             remoteVideo.srcObject = null;
         }
 
-        function msgSearch() {
+        function msgConnecting() {
             var divChat = document.getElementById("chat");
             divChat.innerHTML = "";
             var messageBlock = "";
             messageBlock += '<div class="info">';
-            messageBlock += "   En attente d'un utilisateur";
+            messageBlock += "   Connexion en cours";
             messageBlock += "</div>";
             divChat.innerHTML += messageBlock;
         }
@@ -434,14 +445,12 @@ navigator.mediaDevices
         function destroyPeer() {
             debug("destroy");
             removeVideo();
-            msgSearch();
 
             client.connected = false;
             info = true;
             document.getElementById("roulette").style.display = "none";
             if (client.peer) {
                 client.peer.destroy();
-                socket.emit("queue.rejoin", channel);
             }
         }
 
@@ -460,7 +469,6 @@ navigator.mediaDevices
             messageBlock += len[1] + " animaux <br>";
             messageBlock += "</div>";
             divChat.innerHTML += messageBlock;
-            client.pseudo = data;
         });
     })
     .catch(function (err) {
