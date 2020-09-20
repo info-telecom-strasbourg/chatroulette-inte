@@ -26,12 +26,12 @@ const server = http.createServer(config, app);
 const io = socketio(server);
 const port = process.env.PORT || 3000;
 
-const nsp = io.of('/stat');
+const nsp = io.of("/stat");
 
 app.use(express.static(__dirname + "/public/"));
 app.use(sslRedirect.default());
 
-const route1 = process.env.ROUTE1 || "/*";
+const route1 = process.env.ROUTE1 || "*";
 const route2 = process.env.ROUTE2 || "/papillon";
 const max_score = process.env.MAX_SCORE || 50;
 const score_step = process.env.SCORE_STEP || 2;
@@ -104,10 +104,10 @@ function joinQueue(socket, channel) {
 
     console.log(
         "Queue update : 1A (" +
-        queue[0].length +
-        ") / 2A (" +
-        queue[1].length +
-        ")"
+            queue[0].length +
+            ") / 2A (" +
+            queue[1].length +
+            ")"
     );
     send_queue_len();
     updateStat();
@@ -139,10 +139,10 @@ function connectSockets(ind, ind2) {
 
     console.log(
         "Queue update : 1A (" +
-        queue[0].length +
-        ") / 2A (" +
-        queue[1].length +
-        ")"
+            queue[0].length +
+            ") / 2A (" +
+            queue[1].length +
+            ")"
     );
 
     pair.s2.emit("peer.init");
@@ -255,11 +255,11 @@ function send_queue_len() {
     for (let i = 0; i < queue[1].length; i++) {
         queue[1][i].emit("queue.update", len);
     }
-
 }
 
 function updateStat() {
-    let names1 = [], names2 = [];
+    let names1 = [],
+        names2 = [];
     for (let i = 0; i < queue[0].length; i++) {
         names1.push(queue[0][i].pseudo);
     }
@@ -270,13 +270,11 @@ function updateStat() {
     nsp.emit("queue.update", { channelId: 0, queueMembers: names1 });
     nsp.emit("queue.update", { channelId: 1, queueMembers: names2 });
     nsp.emit("activeConnection", activeConnection);
-
 }
 
 nsp.on("connection", (socket) => {
     updateStat();
 });
-
 
 setInterval(updateQueue, update_freq);
 

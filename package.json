@@ -1,21 +1,21 @@
 {
-  "name": "psroulette",
-  "version": "1.0.0",
-  "main": "index.mjs",
-  "license": "GPLV3",
-  "scripts": {
-    "start": "node index.mjs",
-    "watch": "npx watchify ./client/main.js -o ./public/bundle.js",
-    "build": "npx browserify ./client/main.js -o ./public/bundle.js",
-    "build:stat": "npx browserify ./client/stat.js -o ./public/stat.js"
-  },
-  "dependencies": {
-    "express": "^4.17.1",
-    "heroku-ssl-redirect": "^0.1.1",
-    "simple-peer": "^9.7.2",
-    "socket.io": "^2.3.0"
-  },
-  "devDependencies": {
-    "watchify": "^3.11.1"
-  }
+    "name": "psroulette",
+    "version": "1.0.0",
+    "main": "index.mjs",
+    "license": "GPLV3",
+    "scripts": {
+        "start": "node index.mjs",
+        "watch": "npx watchify ./client/main.js -o ./public/bundle.js",
+        "build": "npx browserify ./client/main.js -o ./public/bundle.js && npm run build:stat",
+        "build:stat": "npx browserify ./client/stat.js -o ./public/stat.js"
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "heroku-ssl-redirect": "^0.1.1",
+        "simple-peer": "^9.7.2",
+        "socket.io": "^2.3.0"
+    },
+    "devDependencies": {
+        "watchify": "^3.11.1"
+    }
 }
