@@ -194,7 +194,7 @@ navigator.mediaDevices
             }
             document.getElementById("connection").style.display = "none";
 
-            socket.emit("login", client.target);
+            socket.emit("login", client.target, myPseudo);
         }
 
         // Add listener for roulette button

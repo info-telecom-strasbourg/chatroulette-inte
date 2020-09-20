@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.mjs",
     "watch": "npx watchify ./client/main.js -o ./public/bundle.js",
-    "build": "npx browserify ./client/main.js -o ./public/bundle.js"
+    "build": "npx browserify ./client/main.js -o ./public/bundle.js",
+    "build:stat": "npx browserify ./client/stat.js -o ./public/stat.js"
   },
   "dependencies": {
     "express": "^4.17.1",

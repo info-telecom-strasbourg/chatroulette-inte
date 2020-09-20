@@ -26,12 +26,14 @@ const server = http.createServer(config, app);
 const io = socketio(server);
 const port = process.env.PORT || 3000;
 
+const nsp = io.of('/stat');
+
 app.use(express.static(__dirname + "/public/"));
 app.use(sslRedirect.default());
 
-const route1 = process.env.ROUTE1 || "/";
+const route1 = process.env.ROUTE1 || "/*";
 const route2 = process.env.ROUTE2 || "/papillon";
-const max_score = process.env.MAX_SCORE || 100;
+const max_score = process.env.MAX_SCORE || 50;
 const score_step = process.env.SCORE_STEP || 2;
 const max_hist = process.env.MAX_HIST || 5;
 const update_freq = process.env.UPDATE_FREQ || 2000;
@@ -43,6 +45,10 @@ const TARGET_BOTH = 2;
 /*                                Routes                                     */
 /*****************************************************************************/
 
+app.get("/stat", (req, res) => {
+    res.sendFile(path.join(__dirname + "/client/stat.html"));
+});
+
 // 1A
 app.get(route1, (req, res) => {
     res.sendFile(path.join(__dirname + "/client/index0.html"));
@@ -53,12 +59,14 @@ app.get(route1, (req, res) => {
 /*****************************************************************************/
 
 var queue = [[], []];
+var activeConnection = 0;
 
 /**
  * Initialise un socket et le met dans la file d'attente
  */
-function login(target) {
+function login(target, name) {
     this.history = [];
+    this.pseudo = name;
     this.score = 0;
     this.auth = true;
     this.target = target;
@@ -96,12 +104,13 @@ function joinQueue(socket, channel) {
 
     console.log(
         "Queue update : 1A (" +
-            queue[0].length +
-            ") / 2A (" +
-            queue[1].length +
-            ")"
+        queue[0].length +
+        ") / 2A (" +
+        queue[1].length +
+        ")"
     );
     send_queue_len();
+    updateStat();
 }
 
 function connectSockets(ind, ind2) {
@@ -130,14 +139,17 @@ function connectSockets(ind, ind2) {
 
     console.log(
         "Queue update : 1A (" +
-            queue[0].length +
-            ") / 2A (" +
-            queue[1].length +
-            ")"
+        queue[0].length +
+        ") / 2A (" +
+        queue[1].length +
+        ")"
     );
 
     pair.s2.emit("peer.init");
 
+    activeConnection++;
+
+    updateStat();
     send_queue_len();
 }
 
@@ -201,10 +213,13 @@ function disconnect() {
 
     if (this.pairedSocket) {
         this.pairedSocket.emit("peer.destroy");
+        activeConnection--;
+        rejoinQueue(this.pairedSocket);
         this.pairedSocket.pairedSocket = null;
     }
 
     send_queue_len();
+    updateStat();
 }
 
 function reroll() {
@@ -217,7 +232,10 @@ function reroll() {
     this.emit("peer.destroy");
     rejoinQueue(this);
 
+    activeConnection--;
+
     send_queue_len();
+    updateStat();
 }
 
 io.on("connection", function (socket) {
@@ -237,7 +255,28 @@ function send_queue_len() {
     for (let i = 0; i < queue[1].length; i++) {
         queue[1][i].emit("queue.update", len);
     }
+
 }
+
+function updateStat() {
+    let names1 = [], names2 = [];
+    for (let i = 0; i < queue[0].length; i++) {
+        names1.push(queue[0][i].pseudo);
+    }
+
+    for (let i = 0; i < queue[1].length; i++) {
+        names2.push(queue[1][i].pseudo);
+    }
+    nsp.emit("queue.update", { channelId: 0, queueMembers: names1 });
+    nsp.emit("queue.update", { channelId: 1, queueMembers: names2 });
+    nsp.emit("activeConnection", activeConnection);
+
+}
+
+nsp.on("connection", (socket) => {
+    updateStat();
+});
+
 
 setInterval(updateQueue, update_freq);
 
