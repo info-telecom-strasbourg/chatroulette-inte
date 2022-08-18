@@ -1,0 +1,20 @@
+version: "2"
+services:
+  chatroulette:
+    image: "node:17"
+    user: "node"
+    stdin_open: true
+    tty: true
+    working_dir: /home/node/app
+#    environment:
+#      - NODE_ENV=test
+    volumes:
+      - /srv/chatroulette/app:/home/node/app
+    ports:
+      - 127.0.10.4:8080:3000
+#      - 10010:3000
+    command: bash -c "npm start"
+#             npm i
+#             && npm update
+#             && npm run build &&
+
