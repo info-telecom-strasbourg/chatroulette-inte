@@ -11,10 +11,5 @@ services:
     volumes:
       - /srv/chatroulette/app:/home/node/app
     ports:
-      - 127.0.10.4:8080:3000
-#      - 10010:3000
-    command: bash -c "npm start"
-#             npm i
-#             && npm update
-#             && npm run build &&
-
+      - 3000:3000
+    command: bash -c "npm i && npm update && npm run build && npm start"
